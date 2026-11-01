@@ -1,0 +1,6 @@
+{
+  "name": "ShiftCore — Cognitive AI Runtime Architecture & Flow Studio",
+  "description": "Interactive system architecture, data dependency explorer, and end-to-end task lifecycle simulator for the Cognitive AI Runtime Platform for Enterprises.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
