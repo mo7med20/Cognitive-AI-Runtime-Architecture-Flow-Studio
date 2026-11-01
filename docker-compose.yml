@@ -1,0 +1,10 @@
+services:
+  shiftcore-calculator-runtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: shiftcore-calculator-runtime:latest
+    container_name: shiftcore-calculator-runtime
+    ports:
+      - "8080:8080"
+    restart: unless-stopped

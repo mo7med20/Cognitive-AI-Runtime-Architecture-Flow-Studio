@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.gitignore
+.playwright-cli
+.env
+*.log
+/public/assets/aistudio/*.zip
