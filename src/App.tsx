@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { ArrowRight, ArrowUpRight, Box, Check, FileCheck2, Network, RotateCcw, Workflow } from 'lucide-react';
 import {
   StageIndex,
   DependencyCategory,
@@ -36,7 +37,7 @@ export default function App() {
     if (primaryComp) {
       setSelectedComponentId(primaryComp);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('workspace')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
   };
 
   const handleSelectPlatform = (platform: 'web' | 'desktop') => {
@@ -73,184 +74,153 @@ export default function App() {
 
   const switchWorkspaceTab = (tab: ActiveWorkspaceTab) => {
     setActiveTab(tab);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
 
+  const workspaceTabs = [
+    { id: 'flow_studio' as const, label: 'Task journey', icon: Workflow },
+    { id: 'architecture' as const, label: 'System map', icon: Network },
+    { id: 'traceability' as const, label: 'Proof', icon: FileCheck2 }
+  ];
+
   return (
-    <div className="min-h-screen flex flex-col text-[#f7f8fb]">
-      {/* Strict 3-Zone Top Bar Contract with ShiftCore Top Orange Stripe */}
-      <header className="sticky top-0 z-30 border-t-4 border-t-[#ff7015] border-b border-b-[#17243a] bg-[#040915]/95 backdrop-blur px-6 py-3.5 flex items-center justify-between gap-8">
-        {/* Zone 1: Single text element wordmark */}
-        <a
-          href="#top"
-          onClick={(e) => {
-            e.preventDefault();
-            switchWorkspaceTab('flow_studio');
-          }}
-          className="text-xl font-extrabold tracking-tight text-white font-display whitespace-nowrap shrink-0"
-        >
-          Shift<span className="text-[#ff7015]">Core</span>
-        </a>
+    <div className="app-shell">
+      <a className="skip-link" href="#workspace">Skip to workspace</a>
+      <header className="app-header">
+        <div className="header-inner">
+          <a
+            href="#top"
+            className="brand"
+            aria-label="ShiftCore home"
+            onClick={(event) => {
+              event.preventDefault();
+              switchWorkspaceTab('flow_studio');
+            }}
+          >
+            <span className="brand-symbol"><Box size={22} strokeWidth={1.7} /></span>
+            <span>Shift<span className="brand-accent">Core</span></span>
+            <span className="product-label">Runtime Studio</span>
+          </a>
 
-        {/* Zone 2: 3 Calculator-Dedicated Views */}
-        <nav
-          aria-label="Calculator Task Views"
-          className="hidden md:flex items-center gap-6 text-sm font-medium"
-        >
-          <button
-            type="button"
-            onClick={() => switchWorkspaceTab('flow_studio')}
-            className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 cursor-pointer ${
-              activeTab === 'flow_studio'
-                ? 'border-[#ff7015] text-white font-bold'
-                : 'border-transparent text-[#95a3ba] hover:text-white'
-            }`}
-          >
-            1. Calculator Runtime Flow (Steps 1–5)
-          </button>
-          <button
-            type="button"
-            onClick={() => switchWorkspaceTab('architecture')}
-            className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 cursor-pointer ${
-              activeTab === 'architecture'
-                ? 'border-[#ff7015] text-white font-bold'
-                : 'border-transparent text-[#95a3ba] hover:text-white'
-            }`}
-          >
-            2. Calculator Architecture & Data Dependencies
-          </button>
-          <button
-            type="button"
-            onClick={() => switchWorkspaceTab('traceability')}
-            className={`py-1 transition-colors whitespace-nowrap shrink-0 border-b-2 cursor-pointer ${
-              activeTab === 'traceability'
-                ? 'border-[#ff7015] text-white font-bold'
-                : 'border-transparent text-[#95a3ba] hover:text-white'
-            }`}
-          >
-            3. Calculator Evidence Ledger (13/13)
-          </button>
-        </nav>
+          <nav className="workspace-nav" aria-label="Workspace views">
+            {workspaceTabs.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                className={`workspace-tab ${activeTab === id ? 'is-active' : ''}`}
+                aria-label={label}
+                aria-current={activeTab === id ? 'page' : undefined}
+                onClick={() => switchWorkspaceTab(id)}
+              >
+                <Icon size={17} aria-hidden="true" />
+                <span className="desktop-tab-label">{label}</span>
+                <span className="mobile-tab-label">{id === 'flow_studio' ? 'Journey' : label}</span>
+              </button>
+            ))}
+          </nav>
 
-        {/* Zone 3: 1 primary action */}
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            type="button"
-            onClick={handleResetSimulation}
-            className="px-4 py-2 text-xs font-extrabold text-[#08101e] bg-[#ff7015] hover:bg-[#ff812f] rounded-xl transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-          >
-            Reset Calculator Task
+          <button type="button" className="reset-button" onClick={handleResetSimulation}>
+            <RotateCcw size={15} aria-hidden="true" />
+            <span>Reset task</span>
           </button>
         </div>
       </header>
 
-      {/* Main Content Container */}
-      <main id="top" className="flex-1 max-w-[1420px] w-full mx-auto px-4 sm:px-6 py-6 space-y-5">
-        {/* ShiftCore Hero Card — 100% Dedicated to TASK-001 («اعمل آلة حاسبة») */}
-        <section className="rounded-2xl border border-[#1d2e48] bg-gradient-to-br from-[#0c182c]/95 to-[#08101f]/90 p-5 sm:p-6 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-          <div>
-            <div className="font-mono text-[11px] font-bold tracking-widest text-[#ff7015]">
-              COGNITIVE AI RUNTIME · REFERENCE TASK #001 («اعمل آلة حاسبة»)
+      <main id="top" className="main-content">
+        <section className="overview" aria-labelledby="overview-title">
+          <div className="overview-copy">
+            <div className="eyebrow"><span className="live-dot" /> INTERACTIVE EXAMPLE</div>
+            <h1 id="overview-title">See how an AI task becomes a <span>verified result.</span></h1>
+            <p>Follow one request through five clear steps. Make a decision, see the work, and check the proof before the task is complete.</p>
+            <div className="overview-actions">
+              <button type="button" className="primary-action" onClick={() => {
+                setActiveTab('flow_studio');
+                document.getElementById('workspace')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}>
+                Start the journey <ArrowRight size={18} aria-hidden="true" />
+              </button>
+              <button type="button" className="text-action" onClick={handleCompleteFullDemoPath}>
+                See finished example <ArrowUpRight size={16} aria-hidden="true" />
+              </button>
             </div>
-            <h1 className="mt-1.5 text-2xl sm:text-3xl font-extrabold text-white tracking-tight text-balance">
-              Give AI the task. Keep control of how it gets done.
-            </h1>
-            <p className="mt-1.5 text-sm text-[#95a3ba] max-w-3xl">
-              The example is intentionally simple:{' '}
-              <strong className="text-white">“اعمل آلة حاسبة”</strong> (Make a calculator). The
-              value is everything the Runtime does around the AI—trace the 5-step Calculator
-              lifecycle on the left and its live architectural & data dependencies on the right.
-            </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <div
-              dir="rtl"
-              className="rounded-xl border border-[#ff7015]/50 bg-[#ff7015]/10 px-4 py-2.5 text-lg font-extrabold text-white whitespace-nowrap"
-            >
-              اعمل آلة حاسبة
+          <div className="task-card">
+            <div className="task-card-heading">
+              <span className="eyebrow">THE REQUEST</span>
+              <span className="task-id">TASK-001</span>
             </div>
-
-            <div className="rounded-xl border border-[#223149] bg-[#091326] px-3.5 py-2 text-xs font-mono">
-              <div className="text-[10px] text-[#95a3ba]">TASK-001 STATUS</div>
-              <div
-                data-testid="global-runtime-status"
-                className={`mt-0.5 font-extrabold ${
-                  metrics.globalStatusTone === 'emerald'
-                    ? 'text-[#35d39a]'
-                    : metrics.globalStatusTone === 'rose'
-                      ? 'text-[#ff6b72]'
-                      : 'text-[#ff7015]'
-                }`}
-              >
-                {metrics.globalStatusLabel}
+            <div className="task-request">
+              <div>
+                <h2 lang="ar" dir="rtl">اعمل آلة حاسبة</h2>
+                <p>“Make a calculator”</p>
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={handleCompleteFullDemoPath}
-              className="px-3.5 py-2.5 rounded-xl border border-[#263852] bg-[#0a1426] hover:border-[#ff7015] text-xs font-mono font-bold text-[#dce3ef] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              Jump to Verified Calculator ⏭
-            </button>
+            <div className="task-card-status">
+              <span className={`status-pill tone-${metrics.globalStatusTone}`} data-testid="global-runtime-status" role="status">
+                <span className="status-dot" />{metrics.globalStatusLabel}
+              </span>
+              <span className="task-stage">Stage {currentStage + 1} of 5</span>
+            </div>
+            <div className="task-progress" aria-label={`Stage ${currentStage + 1} of 5`}>
+              {STAGE_DEFINITIONS.map((stage, index) => (
+                <span key={stage.id} className={index <= currentStage ? 'is-filled' : ''} />
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* VIEW 1: SPLIT-SCREEN CALCULATOR FLOW (STEPS 1–5) + LIVE RUNTIME PIPELINE */}
-        {activeTab === 'flow_studio' && (
-          <LifecycleSimulator
-            currentStage={currentStage}
-            clarifiedPlatform={clarifiedPlatform}
-            repaired={repaired}
-            selectedComponentId={selectedComponentId}
-            dependencyFilter={dependencyFilter}
-            onSelectPlatform={handleSelectPlatform}
-            onApplyRepair={handleApplyRepair}
-            onToggleRepair={handleToggleRepair}
-            onChangeStage={handleStageChange}
-            onFocusComponent={setSelectedComponentId}
-            onChangeDependencyFilter={setDependencyFilter}
-          />
-        )}
+        <section id="workspace" className="workspace-section" aria-label={workspaceTabs.find(tab => tab.id === activeTab)?.label}>
+          <div className="workspace-section-heading">
+            <div>
+              <h2>{activeTab === 'flow_studio' ? 'Follow the task' : activeTab === 'architecture' ? 'How the system works' : 'Why the result can be trusted'}</h2>
+              <p>{activeTab === 'flow_studio' ? 'Move through the steps in order. Each one shows what the system does and what you can decide.' : activeTab === 'architecture' ? 'Explore the modules and connections behind the task.' : 'See each requirement, the decision made, and its evidence.'}</p>
+            </div>
+          </div>
 
-        {/* VIEW 2: CALCULATOR SYSTEM ARCHITECTURE & DATA DEPENDENCY MAP */}
-        {activeTab === 'architecture' && (
-          <ArchitectureGraph
-            currentStage={currentStage}
-            repaired={repaired}
-            clarifiedPlatform={clarifiedPlatform}
-            selectedComponentId={selectedComponentId}
-            onSelectComponent={setSelectedComponentId}
-            dependencyFilter={dependencyFilter}
-            onChangeDependencyFilter={setDependencyFilter}
-            compactMode={false}
-          />
-        )}
-
-        {/* VIEW 3: CALCULATOR END-TO-END TRACEABILITY & 13/13 EVIDENCE LEDGER */}
-        {activeTab === 'traceability' && (
-          <TraceabilityMatrixView
-            repaired={repaired}
-            onToggleRepairState={(val) => setRepaired(val)}
-            onJumpToModule={(compId) => {
-              setSelectedComponentId(compId);
-              switchWorkspaceTab('architecture');
-            }}
-          />
-        )}
+          {activeTab === 'flow_studio' && (
+            <LifecycleSimulator
+              currentStage={currentStage}
+              clarifiedPlatform={clarifiedPlatform}
+              repaired={repaired}
+              selectedComponentId={selectedComponentId}
+              dependencyFilter={dependencyFilter}
+              onSelectPlatform={handleSelectPlatform}
+              onApplyRepair={handleApplyRepair}
+              onToggleRepair={handleToggleRepair}
+              onChangeStage={handleStageChange}
+              onFocusComponent={setSelectedComponentId}
+              onChangeDependencyFilter={setDependencyFilter}
+            />
+          )}
+          {activeTab === 'architecture' && (
+            <ArchitectureGraph
+              currentStage={currentStage}
+              repaired={repaired}
+              clarifiedPlatform={clarifiedPlatform}
+              selectedComponentId={selectedComponentId}
+              onSelectComponent={setSelectedComponentId}
+              dependencyFilter={dependencyFilter}
+              onChangeDependencyFilter={setDependencyFilter}
+              compactMode={false}
+            />
+          )}
+          {activeTab === 'traceability' && (
+            <TraceabilityMatrixView
+              repaired={repaired}
+              onToggleRepairState={setRepaired}
+              onJumpToModule={(componentId) => {
+                setSelectedComponentId(componentId);
+                switchWorkspaceTab('architecture');
+              }}
+            />
+          )}
+        </section>
       </main>
 
-      {/* Quiet Footer */}
-      <footer className="mt-auto border-t border-[#17243a] px-6 py-4 text-xs text-[#95a3ba]">
-        <div className="max-w-[1420px] mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div>
-            ShiftCore — Cognitive AI Runtime · Reference Task #001: «اعمل آلة حاسبة» (Calculator)
-          </div>
-          <div className="font-mono">
-            8 Modules · 14 Data Contracts · 8 Requirements · 13 Provenance Records · No eval()
-          </div>
-        </div>
+      <footer className="app-footer">
+        <div><span className="footer-mark"><Box size={14} /> ShiftCore</span><span>Cognitive AI Runtime</span></div>
+        <span><Check size={14} /> Every decision has a trace. Every result has proof.</span>
       </footer>
     </div>
   );
