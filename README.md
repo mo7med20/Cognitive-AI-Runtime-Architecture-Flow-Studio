@@ -1,31 +1,38 @@
-# ShiftCore — Cognitive AI Runtime (`TASK-001: «اعمل آلة حاسبة»`)
+# ShiftCore — Parallel Local LLM Governance Runtime (`M_SE`)
 
-Interactive university defense and architecture studio for **Cognitive AI Runtime Platform for Enterprises**, demonstrating the complete 5-step governed lifecycle, 8 runtime modules (`MOD-01`–`MOD-08`), 14 inter-module data contracts, and 13 provenance evidence records for the reference task **«اعمل آلة حاسبة» (Make a Calculator)**.
+Interactive full-stack Software Engineering governance runtime and presentation studio for **ShiftCore (`M_SE`)**, demonstrating progressive step-by-step execution (`S0 → S1 → S2 → S3 → S4 → S5`) powered by dual Local Model worker pools (**Worker A · Coder `qwen2.5-coder:7b` ∥ Worker B · Verifier `deepseek-coder:6.7b`**), real-time token streaming (`Live Role Logs`), 8 governance modules (`MOD-01`–`MOD-08`), 14 inter-module data contracts, and 13 dynamic provenance evidence records.
 
 ---
 
-## 1. Run with Docker (Recommended for Presentation)
+## 1. Run with Docker (Recommended for Presentation & Deployment)
 
-### Option A: Using Docker Compose (One Command)
+### Option A: Using Docker Compose (Full-Stack Runtime + Ollama Daemon)
 ```bash
+# Build and start both shiftcore-runtime (port 3000) and shiftcore-ollama (port 11434)
 docker compose up --build -d
-```
-Then open **http://localhost:8080** in your browser.
 
-To stop the container:
+# (Optional) Pull the Coder and Verifier models inside the Ollama container
+docker exec -it shiftcore-ollama ollama pull qwen2.5-coder:7b
+docker exec -it shiftcore-ollama ollama pull deepseek-coder:6.7b
+```
+Then open **http://localhost:3000** in your browser.
+- Health check endpoint: **http://localhost:3000/api/health**
+- Independent worker status endpoint: **http://localhost:3000/api/llm/status**
+
+To stop the containers:
 ```bash
 docker compose down
 ```
 
-### Option B: Using Docker CLI Directly
+### Option B: Using Docker CLI Directly (Standalone Full-Stack Container)
 ```bash
-# 1. Build the production Docker image (runs unit tests + TypeScript check + Vite build)
-docker build -t shiftcore-calculator-runtime:latest .
+# 1. Build the production Docker image (runs 8/8 unit tests + TypeScript check + Vite build)
+docker build -t shiftcore-runtime:latest .
 
-# 2. Run the container on port 8080
-docker run --rm -p 8080:8080 --name shiftcore-calc shiftcore-calculator-runtime:latest
+# 2. Run the full-stack container on port 3000
+docker run --rm -p 3000:3000 --name shiftcore-runtime shiftcore-runtime:latest
 ```
-Then open **http://localhost:8080**.
+Then open **http://localhost:3000**.
 
 ---
 
@@ -35,19 +42,9 @@ Then open **http://localhost:8080**.
 # Install dependencies
 npm install
 
-# Run unit test suite (5/5 tests)
+# Run unit test suite (8/8 tests)
 npx tsx --test src/lib/runtimeEngine.test.ts
 
-# Start development server on http://localhost:3000
+# Start full-stack Express + Vite server on http://localhost:3000
 npm run dev
 ```
-
----
-
-## 3. Presentation Demo Flow (`TASK-001: «اعمل آلة حاسبة»`)
-
-1. **Step 1 · Understand**: Inspect the raw Arabic prompt `«اعمل آلة حاسبة»`, workspace context (`TypeScript` preference vs. `eval() prohibited` mandatory rule), and click **`Web`** to resolve the material platform ambiguity.
-2. **Step 2 · Plan**: Show the 5-step plan, the separation of **7 User Requirements + 1 Runtime Quality Requirement (`Safe invalid division`)**, and click **`Why?`** on `Vanilla TypeScript + Vite` to show why `React` and `Next.js` were rejected.
-3. **Step 3 · Work**: Highlight the authoritative status split: **`Agent status = IMPLEMENTATION COMPLETE`** while **`Task status = VERIFYING`**, with `5` files created across `12` execution events.
-4. **Step 4 · Check & Targeted Repair**: Contrast **`13 / 13 ✓ Evidence`** with **`7 / 8 ✕ Acceptance Checks`** blocked by `DIV-ZERO-01` (`8 ÷ 0 → Infinity`), then click **`Fix & verify again`** to apply the surgical zero-denominator guard (`8 / 8 ✓`).
-5. **Step 5 · Result**: Show the **`✓ VERIFIED COMPLETE`** seal, the `pgvector` experience record, and test the live **Calculator Web Application** (`Test 8 ÷ 0 (v1.1 → Error)` vs. `Simulate Pre-Repair (8 ÷ 0 → Infinity)`).

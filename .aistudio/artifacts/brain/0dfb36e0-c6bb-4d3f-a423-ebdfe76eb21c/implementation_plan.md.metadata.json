@@ -1,0 +1,6 @@
+{
+  "summary": "Implementation plan for ShiftCore's Role-Driven Progressive Local LLM Runtime Execution, ensuring the application starts in an empty S0 state with zero static results and progressively reveals each stage's artifacts in chronological order as its assigned Local Model role executes.",
+  "updatedAt": "2026-11-03T16:57:38.120255215Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

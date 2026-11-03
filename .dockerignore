@@ -3,6 +3,9 @@ dist
 .git
 .gitignore
 .playwright-cli
+.aistudio
+output
+data/*.json
 .env
 *.log
 /public/assets/aistudio/*.zip

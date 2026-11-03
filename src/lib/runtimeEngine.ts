@@ -222,15 +222,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_intake',
     code: 'MOD-01',
     name: 'Task Intake & Context Gateway',
-    arabicTitle: 'بوابة استقبال مهمة الآلة الحاسبة والسياق',
+    arabicTitle: 'بوابة استقبال المهام البرمجية وتحليل بيئة المستودع',
     layer: 'presentation_intake',
     layerLabel: 'Layer 1 · Interaction & Context Gateway',
-    techStack: 'React 19 + TypeScript · FastAPI Ingress',
-    summary: 'Captures raw user prompt («اعمل آلة حاسبة»), detects Node.js in workspace, and receives the user’s Web platform choice.',
+    techStack: 'React 19 + TypeScript · Express Local LLM Bridge',
+    summary: 'Captures the developer prompt, indexes Tier 1 Repository AST facts, and receives the developer’s blocking gate resolution.',
     architecturalRole:
-      'Normalizes the Arabic prompt «اعمل آلة حاسبة» into TaskRequest #TASK-001 and binds the local Node.js workspace descriptor.',
-    inputs: ['Raw Prompt: “اعمل آلة حاسبة”', 'Workspace Runtime: Node.js', 'User Platform Choice: “Web”'],
-    outputs: ['TaskRequest Envelope (#TASK-001)', 'ClarificationDelta (platform="Web")'],
+      'Normalizes the raw Software Engineering prompt into a structured ITaskIntent envelope and binds the repository AST & dependency descriptor.',
+    inputs: ['Developer Prompt (ITaskIntent)', 'Tier 1 Repository AST & Manifests', 'Ambiguity Gate Selection'],
+    outputs: ['TaskRequest Envelope (ITaskIntent)', 'ClarificationDelta (Zero-Entropy Gate Lock)'],
     dbTables: ['tasks', 'workspace_contexts'],
     activeInStages: [0],
     x: 28,
@@ -240,15 +240,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_policy',
     code: 'MOD-02',
     name: 'Policy & Constraint Engine',
-    arabicTitle: 'محرك السياسات والقيود المؤسسية',
+    arabicTitle: 'محرك السياسات والقيود المؤسسية (Tier 2)',
     layer: 'cognitive_control',
     layerLabel: 'Layer 2 · Cognitive Analysis & Governance',
-    techStack: 'Python / FastAPI · Static AST Policy Scanner',
-    summary: 'Separates non-binding preference (TypeScript) from mandatory calculator rules (eval() prohibited, build + checks, local scope).',
+    techStack: 'TypeScript AST Policy Scanner · Tier 2 Rule Engine',
+    summary: 'Enforces mandatory Tier 2 organizational security & concurrency policies (POL-2026-v1 / v2) and static AST compliance.',
     architecturalRole:
-      'Evaluates calculator planning and code actions against workspace rules: Allowed (TS/Vite), Modified (+1 Div-Zero rule), Held (Web vs Desktop), Prohibited (eval()).',
-    inputs: ['Preference: TypeScript', 'Safety Rule: eval() prohibited', 'Quality Rule: Build + critical checks'],
-    outputs: ['PolicyConstraintMatrix (4 Mandatory Rules)', 'Static AST Scan Certificate (EVID-04: 0 eval())'],
+      'Evaluates planning and code synthesis against organizational policy invariants: Allowed (Repo Stack), Modified (+1 Policy Requirement R8), Held (Ambiguity Gate), Prohibited (Unsafe Eval / Unparameterized SQL).',
+    inputs: ['Tier 1 Repo Stack Preferences', 'Active Policy Hash (POL-2026-v1/v2)', 'Mandatory Security & Concurrency Rules'],
+    outputs: ['PolicyConstraintMatrix (Tier 2 Rules)', 'Static AST Scan Certificate (EVID-04)'],
     dbTables: ['policy_definitions', 'policy_evaluations'],
     activeInStages: [0, 1, 3],
     x: 28,
@@ -258,15 +258,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_experience',
     code: 'MOD-03',
     name: 'Controlled Experience Store',
-    arabicTitle: 'مخزن الخبرات المحكوم (pgvector)',
+    arabicTitle: 'مخزن المعرفة الموثقة (Tier 3 Sealed Store)',
     layer: 'persistence_memory',
     layerLabel: 'Layer 4 · Audit Ledger & Vector Memory',
-    techStack: 'PostgreSQL 16 + pgvector',
-    summary: 'Step 1: Reports 0 relevant prior patterns for calculator. Step 5: Stores the verified TS Web Calculator + zero-division guard.',
+    techStack: 'Tier 3 Cryptographically Sealed Knowledge Store',
+    summary: 'Stage 1: Retrieves policy-valid Tier 3 Knowledge Units. Stage 5: Promotes newly sealed architectural patterns (#SEAL) for Task N+1 reuse.',
     architecturalRole:
-      'Prevents blind snippet reuse in Step 1 when no trusted pattern matches; in Step 5 indexes the verified calculator pattern under strict context and policy guards.',
-    inputs: ['Calculator Task Embedding Vector', 'Active Policy Hash', 'Verified Calculator Seal (Step 5)'],
-    outputs: ['Step 1: None relevant (0 reused)', 'Step 5: Saved Experience EXP-VEC-2026-001'],
+      'Prevents unverified snippet reuse in Stage 1 by checking policy hash compatibility; in Stage 5 promotes cryptographically sealed Knowledge Units (IKnowledgeUnit) extracted by WORKER-S5-EXTRACTOR.',
+    inputs: ['Task Domain Signature', 'Active Policy Hash (POL-2026-v1)', 'Verified Completion Seal (#SEAL)'],
+    outputs: ['Stage 1: Policy-Valid Tier 3 Matches', 'Stage 5: Promoted KnowledgeUnit (KU)'],
     dbTables: ['experience_vectors', 'experience_reuse_audit'],
     activeInStages: [0, 4],
     x: 28,
@@ -276,15 +276,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_analyzer',
     code: 'MOD-04',
     name: 'Requirement & Ambiguity Analyzer',
-    arabicTitle: 'محلل متطلبات الآلة الحاسبة وحسم الغموض',
+    arabicTitle: 'محلل المتطلبات وبوابة حسم الغموض (WORKER-S1-INTAKE)',
     layer: 'cognitive_control',
     layerLabel: 'Layer 2 · Cognitive Analysis & Governance',
-    techStack: 'Python / FastAPI · Ambiguity Classifier',
-    summary: 'Detects that “اعمل آلة حاسبة” lacks a target platform (Web vs Desktop), asks the user, and locks 7 User Reqs + 1 Quality Req.',
+    techStack: 'Local LLM Role (WORKER-S1-INTAKE) · Entropy Gate',
+    summary: 'Auto-resolves repository facts from Tier 1–3 with 0 questions asked and isolates 1 blocking architectural ambiguity gate.',
     architecturalRole:
-      'Halts calculator planning until the user selects Web, then synthesizes TaskSpec v1 combining 7 user arithmetic/UI requirements with 1 Runtime quality condition (Safe invalid division).',
-    inputs: ['TaskRequest (“اعمل آلة حاسبة”)', 'PolicyConstraintMatrix', 'User Clarification (“Web”)'],
-    outputs: ['Blocking Question: “Where should the calculator run?”', 'TaskSpec v1 (8 Calculator Requirements)'],
+      'Halts downstream planning until residual architectural entropy is reduced to 0.00 bits via the blocking gate, compiling the locked TaskSpec contract.',
+    inputs: ['TaskRequest Envelope', 'PolicyConstraintMatrix', 'Developer Gate Resolution'],
+    outputs: ['Deterministic Ambiguity Gate (IAmbiguityGate)', 'Compiled TaskSpec Contract (Entropy = 0.00)'],
     dbTables: ['task_specifications', 'clarification_events'],
     activeInStages: [0, 1],
     x: 302,
@@ -294,15 +294,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_planner',
     code: 'MOD-05',
     name: 'Policy-Aware Planner & Router',
-    arabicTitle: 'مخطط الآلة الحاسبة وموجّه التقنيات',
+    arabicTitle: 'مخطط المتطلبات والقرارات المعمارية (WORKER-S2-PLANNER)',
     layer: 'cognitive_control',
     layerLabel: 'Layer 2 · Cognitive Analysis & Governance',
-    techStack: 'Python / FastAPI · Capability Router',
-    summary: 'Builds the 5-step Calculator Plan, selects Vanilla TS + Vite & No Backend, and records why React and Next.js were rejected.',
+    techStack: 'Local LLM Role (WORKER-S2-PLANNER) · ADR Synthesizer',
+    summary: 'Synthesizes 7 functional/schema requirements (R1–R7) + 1 mandatory policy invariant (R8) and locks Architectural Decision Records (ADRs).',
     architecturalRole:
-      'Matches calculator complexity (small single-view app, no routing/SSR/DB) to the minimal safe stack and constructs the Calculator Completion Contract.',
-    inputs: ['TaskSpec v1 (8 Calculator Reqs)', 'ExecutionGuardrails (Local only, no eval())'],
-    outputs: ['5-Step Calculator Plan', '4 Recorded Decisions (Why?)', 'Calculator Completion Contract'],
+      'Constructs the bijective 1:1 Requirement-to-Verification Matrix (R1..R8) and records explicit rejected architectural alternatives before code synthesis.',
+    inputs: ['Locked TaskSpec Contract', 'ExecutionGuardrails (Tier 2 Policy)'],
+    outputs: ['8 Verifiable Requirements (R1..R8)', 'Locked Architectural Decision Records (ADRs)'],
     dbTables: ['execution_plans', 'architectural_decisions'],
     activeInStages: [1, 2],
     x: 576,
@@ -312,15 +312,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_orchestrator',
     code: 'MOD-06',
     name: 'State-Aware Execution Orchestrator',
-    arabicTitle: 'منسق تنفيذ الآلة الحاسبة الواعي بالحالة',
+    arabicTitle: 'منسق التوليد المتوازي والإصلاح الجراحي (WORKER-S3A / S4B)',
     layer: 'execution_verification',
     layerLabel: 'Layer 3 · Execution, Verification & Gate',
-    techStack: 'Python / FastAPI · Local Node.js Sandbox',
-    summary: 'Generates 5 calculator files across 12 execution events, holds Task Status at VERIFYING, and applies the surgical 8÷0 guard on Checkpoint #S3-01.',
+    techStack: 'Parallel Local LLM Workers (Coder A ∥ Test B) · AST Patcher',
+    summary: 'Dispatches parallel Worker A (Implementation) ∥ Worker B (Independent Test Suite) into Checkpoint #S3-01 and applies surgical AST patches in Stage 4B.',
     architecturalRole:
-      'Separates Agent Status (IMPLEMENTATION COMPLETE) from Task Status (VERIFYING) and retains Checkpoint #S3-01 so DIV-ZERO-01 is fixed surgically without restarting.',
-    inputs: ['Calculator ExecutionDAG', 'TargetedRepairDirective (add v === 0 guard)'],
-    outputs: ['Calculator Artifact v1.0 (5 files) → v1.1 (Guarded)', 'Retained Checkpoint #S3-01'],
+      'Separates Agent Status (IMPLEMENTATION COMPLETE) from Runtime Task Status (VERIFYING) and retains immutable Checkpoint #S3-01 so Stage 4B repairs only the failing AST node.',
+    inputs: ['Locked Execution Plan (R1..R8)', 'TargetedRepairDirective (Stage 4B AST Patch)'],
+    outputs: ['Multi-File Checkpoint #S3-01 (v1.0) → #S3-01-v1.1 (Patched)', 'Parallel Worker Telemetry Streams'],
     dbTables: ['execution_attempts', 'state_snapshots'],
     activeInStages: [2, 3],
     x: 576,
@@ -330,15 +330,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_evidence',
     code: 'MOD-07',
     name: 'Evidence & Provenance Ledger',
-    arabicTitle: 'سجل أدلة الآلة الحاسبة (13/13 Provenance)',
+    arabicTitle: 'سجل الأدلة وتتبع النسب البرمجي (13/13 Provenance)',
     layer: 'persistence_memory',
     layerLabel: 'Layer 4 · Audit Ledger & Vector Memory',
-    techStack: 'PostgreSQL 16 Immutable Ledger',
-    summary: 'Captures all 13 calculator provenance records (Spec, 4 ADRs, Build, AST no-eval scan, Scope check, and 8 Calculator test traces).',
+    techStack: 'Immutable SHA-256 Provenance & Evidence Ledger',
+    summary: 'Records all 13 live provenance items reduced from Local Model roles (EVID-01..EVID-13) with worker role IDs, timestamps, and latencies.',
     architecturalRole:
-      'Proves that Evidence Coverage (13/13) is separate from Acceptance Pass Rate (7/8): failing test DIV-ZERO-01 (8÷0 → Infinity) is preserved as immutable audit evidence.',
-    inputs: ['Vite/TSC Build Logs (5 files)', 'AST Scan (0 eval())', '8 Calculator Test Traces (including DIV-ZERO-01)'],
-    outputs: ['EvidenceBundle (13/13 Linked Calculator Records)', 'Requirement → Decision → Evidence Lineage'],
+      'Decouples Evidence Coverage (13/13 recorded artifacts) from Verification Pass Rate (7/8 pre-repair → 8/8 post-repair), preserving pre-repair failures as immutable audit proof.',
+    inputs: ['Multi-File AST Hashes', 'Static Policy Scan (EVID-04)', '8 Requirement Verification Traces (R1..R8)'],
+    outputs: ['EvidenceBundle (13/13 Live Provenance Records)', 'Bijective Requirement → ADR → Evidence Lineage'],
     dbTables: ['evidence_records', 'claim_provenance_links'],
     activeInStages: [2, 3, 4],
     x: 302,
@@ -348,15 +348,15 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
     id: 'comp_verifier',
     code: 'MOD-08',
     name: 'Independent Verifier & Gate',
-    arabicTitle: 'المتحقق المستقل وبوابة اعتماد الآلة الحاسبة',
+    arabicTitle: 'المتحقق المستقل وبوابة الاعتماد التشفيري (WORKER-S4-ORACLE)',
     layer: 'execution_verification',
     layerLabel: 'Layer 3 · Execution, Verification & Gate',
-    techStack: 'Deterministic Calculator Test Runner · Completion Gate',
-    summary: 'Tests all 8 calculator behaviors; blocks completion on 8 ÷ 0 = Infinity (7/8); triggers surgical repair; seals 8/8 Verified Complete.',
+    techStack: 'Independent Verifier Model (Worker B) · Cryptographic Sealer',
+    summary: 'Audits Checkpoint #S3-01 against R1..R8; blocks release on R8 policy failure (7/8); verifies surgical AST patch (8/8); issues cryptographic seal.',
     architecturalRole:
-      'Enforces the Completion Rule (“No unresolved required failure”): blocks Artifact v1.0 on DIV-ZERO-01, verifies repaired Artifact v1.1 (8÷0 → Error), and unlocks Step 5.',
-    inputs: ['Calculator Artifact v1.0 / v1.1', 'Calculator Completion Contract', '13/13 Evidence Records'],
-    outputs: ['Pre-Repair: BLOCKED (7/8 ✕)', 'TargetedRepairDirective (to MOD-06)', 'Post-Repair: VERIFIED COMPLETE (8/8 ✓)'],
+      'Enforces the zero-defect completion invariant using an independent Verifier model role isolated from the Coder model role.',
+    inputs: ['Checkpoint #S3-01 / #S3-01-v1.1', 'Independent Test Suite (Role 3B)', '13/13 Evidence Records'],
+    outputs: ['Pre-Repair: BLOCKED ON R8 (7/8 ✕)', 'TargetedRepairDirective (to MOD-06)', 'Post-Repair: SEALED (8/8 ✓)'],
     dbTables: ['verification_outcomes', 'completion_gates'],
     activeInStages: [2, 3, 4],
     x: 850,
@@ -364,358 +364,147 @@ export const SYSTEM_COMPONENTS: SystemComponentNode[] = [
   }
 ];
 
-/**
- * Stage-by-Stage Architectural Execution Flow for the Calculator Task («اعمل آلة حاسبة»).
- * Maps each of the 5 user steps directly to the exact internal runtime modules, data payloads, and DB writes.
- */
-export const STAGE_CALCULATOR_FLOWS: Record<StageIndex, StageArchitectureStepNode[]> = {
-  0: [
-    {
-      stepCode: '1.1',
-      fromModuleCode: 'USER',
-      toModuleCode: 'MOD-01',
-      moduleId: 'comp_intake',
-      title: 'Calculator Prompt Intake & Workspace Detection',
-      calculatorDataIn: 'Raw Prompt: «اعمل آلة حاسبة»',
-      runtimeOperation: 'Normalizes prompt into software_dev task & detects Node.js in workspace.',
-      calculatorDataOut: 'TaskRequest Envelope (#TASK-001)',
-      dbTableAction: 'INSERT INTO tasks, workspace_contexts',
-      tone: 'orange'
-    },
-    {
-      stepCode: '1.2',
-      fromModuleCode: 'MOD-02 + MOD-03',
-      toModuleCode: 'MOD-04',
-      moduleId: 'comp_policy',
-      title: 'Policy vs. Preference & pgvector Experience Check',
-      calculatorDataIn: 'Workspace Rules + pgvector Query',
-      runtimeOperation:
-        'Loads TypeScript (preference), eval() prohibited (mandatory rule), and checks pgvector (0 prior calculator matches).',
-      calculatorDataOut: 'PolicyConstraintMatrix + ExperienceMatch(0)',
-      dbTableAction: 'SELECT policy_definitions, experience_vectors',
-      tone: 'blue'
-    },
-    {
-      stepCode: '1.3',
-      fromModuleCode: 'MOD-04',
-      toModuleCode: 'USER GATE',
-      moduleId: 'comp_analyzer',
-      title: 'Material Ambiguity Gate: Web vs. Desktop Calculator',
-      calculatorDataIn: 'Goal: Calculator application (Platform missing)',
-      runtimeOperation:
-        'Halts planning because Web vs. Desktop changes the product itself; once user selects Web, locks TaskSpec v1.',
-      calculatorDataOut: 'TaskSpec v1 (7 User Reqs + 1 Safe Division Req)',
-      dbTableAction: 'INSERT INTO clarification_events, task_specifications',
-      tone: 'emerald'
-    }
-  ],
-  1: [
-    {
-      stepCode: '2.1',
-      fromModuleCode: 'MOD-04',
-      toModuleCode: 'MOD-05',
-      moduleId: 'comp_analyzer',
-      title: 'Requirement Origin Synthesis (7 User + 1 Runtime Quality)',
-      calculatorDataIn: '7 User Reqs (Add, Sub, Mul, Div, Dec, Clear, Kbd)',
-      runtimeOperation:
-        'Appends Runtime Quality Requirement REQ-08 (Invalid division must fail safely instead of Infinity).',
-      calculatorDataOut: 'Locked 8-Requirement Specification',
-      dbTableAction: 'UPDATE task_specifications SET req_count = 8',
-      tone: 'blue'
-    },
-    {
-      stepCode: '2.2',
-      fromModuleCode: 'MOD-05',
-      toModuleCode: 'MOD-05',
-      moduleId: 'comp_planner',
-      title: 'Calculator Stack Selection & Rejected Alternatives',
-      calculatorDataIn: 'Scope: Small single-screen calculator, no SSR/DB',
-      runtimeOperation:
-        'Selects Vanilla TypeScript + Vite & No Backend; explicitly rejects React and Next.js as unnecessary overhead.',
-      calculatorDataOut: '4 Recorded Decisions (ADR-01..04 with "Why?")',
-      dbTableAction: 'INSERT INTO architectural_decisions (4 rows)',
-      tone: 'orange'
-    },
-    {
-      stepCode: '2.3',
-      fromModuleCode: 'MOD-05 + MOD-02',
-      toModuleCode: 'MOD-06',
-      moduleId: 'comp_planner',
-      title: 'Calculator Completion Contract & Execution DAG',
-      calculatorDataIn: '5-Step Plan + 4 Workspace Rules',
-      runtimeOperation:
-        'Binds execution path (Init → Core → UI → Kbd → Error guard → Tests → Build) to verification path.',
-      calculatorDataOut: 'Calculator ExecutionDAG + CompletionContract',
-      dbTableAction: 'INSERT INTO execution_plans',
-      tone: 'emerald'
-    }
-  ],
-  2: [
-    {
-      stepCode: '3.1',
-      fromModuleCode: 'MOD-05',
-      toModuleCode: 'MOD-06',
-      moduleId: 'comp_orchestrator',
-      title: 'Local Sandbox Code Generation & Vite Build',
-      calculatorDataIn: 'ExecutionDAG (Vanilla TS + Vite Calculator)',
-      runtimeOperation:
-        'Creates 5 calculator files (index.html, src/*, tests/*) across 12 execution events; retains Checkpoint #S3-01.',
-      calculatorDataOut: 'Candidate Calculator Artifact v1.0',
-      dbTableAction: 'INSERT INTO execution_attempts, state_snapshots',
-      tone: 'blue'
-    },
-    {
-      stepCode: '3.2',
-      fromModuleCode: 'MOD-06',
-      toModuleCode: 'MOD-08',
-      moduleId: 'comp_orchestrator',
-      title: 'Authoritative Status Split (Agent vs. Runtime)',
-      calculatorDataIn: 'Agent Signal: "IMPLEMENTATION COMPLETE"',
-      runtimeOperation:
-        'Prevents premature completion: keeps TASK-001 status at VERIFYING while MOD-08 checks all 8 calculator requirements.',
-      calculatorDataOut: 'Agent = COMPLETE · Runtime Task = VERIFYING',
-      dbTableAction: 'UPDATE tasks SET status = "VERIFYING"',
-      tone: 'orange'
-    },
-    {
-      stepCode: '3.3',
-      fromModuleCode: 'MOD-06 + MOD-02',
-      toModuleCode: 'MOD-07',
-      moduleId: 'comp_evidence',
-      title: 'Provenance Capture & Static AST Policy Scan',
-      calculatorDataIn: 'Build Logs + AST Scan (0 eval()) + 8 Test Traces',
-      runtimeOperation:
-        'Verifies 5/5 runtime policy checks (local scope, no eval()) and records all 13 provenance items in PostgreSQL.',
-      calculatorDataOut: 'EvidenceBundle (13/13 Provenance Records)',
-      dbTableAction: 'INSERT INTO evidence_records (13 rows)',
-      tone: 'emerald'
-    }
-  ],
-  3: [
-    {
-      stepCode: '4.1',
-      fromModuleCode: 'MOD-07',
-      toModuleCode: 'MOD-08',
-      moduleId: 'comp_verifier',
-      title: 'Independent Deterministic Check of 8 Calculator Behaviors',
-      calculatorDataIn: 'Artifact v1.0 + 13/13 Evidence Records',
-      runtimeOperation:
-        '7 user checks PASS, but boundary check DIV-ZERO-01 (8 ÷ 0) returns raw "Infinity" instead of controlled "Error".',
-      calculatorDataOut: '7/8 Acceptance Passed ✕ · Gate BLOCKED',
-      dbTableAction: 'INSERT INTO verification_outcomes (status="BLOCKED")',
-      tone: 'rose'
-    },
-    {
-      stepCode: '4.2',
-      fromModuleCode: 'MOD-08',
-      toModuleCode: 'MOD-06',
-      moduleId: 'comp_orchestrator',
-      title: 'Surgical State-Aware Repair on Checkpoint #S3-01',
-      calculatorDataIn: 'TargetedRepairDirective (DIV-ZERO-01)',
-      runtimeOperation:
-        'Patches only calculator division logic: adds `if (op === "÷" && v === 0) display = "Error"` without full restart.',
-      calculatorDataOut: 'Patched Calculator Artifact v1.1',
-      dbTableAction: 'UPDATE state_snapshots (#S3-01 -> #S3-02)',
-      tone: 'orange'
-    },
-    {
-      stepCode: '4.3',
-      fromModuleCode: 'MOD-06',
-      toModuleCode: 'MOD-08',
-      moduleId: 'comp_verifier',
-      title: 'Targeted Re-Verification & Regression Suite',
-      calculatorDataIn: 'Patched Artifact v1.1 + Regression Tests',
-      runtimeOperation:
-        'Re-evaluates 8 ÷ 0 → "Error" (PASS) and confirms all 7 arithmetic/UI/keyboard checks remain 100% passing.',
-      calculatorDataOut: '8/8 Acceptance Checks Passed ✓ · Gate UNLOCKED',
-      dbTableAction: 'UPDATE completion_gates SET status = "PASSED"',
-      tone: 'emerald'
-    }
-  ],
-  4: [
-    {
-      stepCode: '5.1',
-      fromModuleCode: 'MOD-08',
-      toModuleCode: 'MOD-07',
-      moduleId: 'comp_verifier',
-      title: 'Verified Completion Seal & Provenance Certificate',
-      calculatorDataIn: '8/8 Reqs · 8/8 Checks · 4/4 Rules · 13/13 Evidence',
-      runtimeOperation:
-        'Seals immutable audit certificate proving why the Calculator task is verified complete with 0 unresolved issues.',
-      calculatorDataOut: 'VerifiedCompletionSeal (#SEAL-CALC-001)',
-      dbTableAction: 'INSERT INTO completion_gates (sealed=true)',
-      tone: 'emerald'
-    },
-    {
-      stepCode: '5.2',
-      fromModuleCode: 'MOD-08',
-      toModuleCode: 'MOD-03',
-      moduleId: 'comp_experience',
-      title: 'Controlled Experience Indexing in pgvector',
-      calculatorDataIn: 'Verified TS Web Calculator + DIV-ZERO-01 Guard',
-      runtimeOperation:
-        'Saves pattern to pgvector; future tasks will reuse it ONLY when context, quality, and active policies match.',
-      calculatorDataOut: 'Experience Record EXP-VEC-2026-001',
-      dbTableAction: 'INSERT INTO experience_vectors (pgvector)',
-      tone: 'blue'
-    },
-    {
-      stepCode: '5.3',
-      fromModuleCode: 'MOD-08',
-      toModuleCode: 'USER',
-      moduleId: 'comp_verifier',
-      title: 'Release of Interactive Calculator Web Application',
-      calculatorDataIn: 'Verified Calculator Artifact v1.1',
-      runtimeOperation:
-        'Delivers the working Calculator Web App with guarded division (8 ÷ 0 → Error), keyboard input, and full audit proof.',
-      calculatorDataOut: 'Live Calculator Artifact Ready for Use',
-      dbTableAction: 'UPDATE tasks SET status = "VERIFIED_COMPLETE"',
-      tone: 'orange'
-    }
-  ]
-};
-
 export const DATA_DEPENDENCY_EDGES: DataDependencyEdge[] = [
   {
     id: 'edge_prompt_intake',
     from: 'comp_intake',
     to: 'comp_analyzer',
     payloadName: 'TaskRequest Envelope',
-    schemaSummary: '{ prompt: "اعمل آلة حاسبة", domain: "software_dev", env: "Node.js" }',
+    schemaSummary: '{ prompt: string, domain: "software_engineering", repoAstIndexed: true }',
     category: 'data_payload',
     activeInStages: [0],
-    description: 'Delivers raw Arabic calculator prompt and detected Node.js workspace capability to the Requirement Analyzer.'
+    description: 'Delivers the raw developer prompt and indexed Tier 1 repository AST context to WORKER-S1-INTAKE.'
   },
   {
     id: 'edge_policy_analyzer',
     from: 'comp_policy',
     to: 'comp_analyzer',
     payloadName: 'PolicyConstraintMatrix',
-    schemaSummary: '{ mandatory: ["NO_EVAL", "BUILD_AND_CHECK"], preferences: ["TYPESCRIPT"] }',
+    schemaSummary: '{ activePolicyHash: "POL-2026-v1", mandatory: ["NO_EVAL", "FAIL_CLOSED_R8"] }',
     category: 'policy_constraint',
     activeInStages: [0, 1],
-    description: 'Injects mandatory security constraints (no eval()) and non-binding preferences (TypeScript) into calculator analysis.'
+    description: 'Injects mandatory Tier 2 security and concurrency constraints into Stage 1 intake and Stage 2 planning.'
   },
   {
     id: 'edge_exp_analyzer',
     from: 'comp_experience',
     to: 'comp_analyzer',
     payloadName: 'ExperienceQueryResponse',
-    schemaSummary: '{ matchedVectors: 0, reason: "No prior verified calculator pattern matches context" }',
+    schemaSummary: '{ tier3Units: KnowledgeUnit[], policyHashMatch: boolean }',
     category: 'data_payload',
     activeInStages: [0],
-    description: 'Queries pgvector for prior calculator experiences; returns 0 trusted matches so the Runtime does not hallucinate reuse.'
+    description: 'Queries the Tier 3 Knowledge Store for prior cryptographically sealed patterns matching the active policy hash.'
   },
   {
     id: 'edge_intake_analyzer',
     from: 'comp_analyzer',
     to: 'comp_intake',
-    payloadName: 'ClarificationGate (Web vs Desktop)',
-    schemaSummary: '{ blockingQuestion: "Where should the calculator run?", options: ["Web", "Desktop"] }',
+    payloadName: 'AmbiguityGate (IAmbiguityGate)',
+    schemaSummary: '{ gateId: string, residualEntropyBits: 1.0, options: [OptA, OptB] }',
     category: 'control_flow',
     activeInStages: [0],
-    description: 'Halts calculator planning until the user resolves the material platform ambiguity.'
+    description: 'Halts Stage 2 planning until the developer resolves the single irreducible architectural trade-off.'
   },
   {
     id: 'edge_clarify_loop',
     from: 'comp_intake',
     to: 'comp_analyzer',
     payloadName: 'ClarificationDelta',
-    schemaSummary: '{ selectedPlatform: "Web", clarifiedBy: "USER", timestamp: "T+02s" }',
+    schemaSummary: '{ selectedOption: string, residualEntropyBits: 0.0, status: "LOCKED" }',
     category: 'control_flow',
     activeInStages: [0, 1],
-    description: 'Supplies the user-confirmed target platform ("Web") to unlock Calculator TaskSpec v1.'
+    description: 'Supplies the developer-confirmed architectural option to compile the zero-entropy TaskSpec contract.'
   },
   {
     id: 'edge_analyzer_planner',
     from: 'comp_analyzer',
     to: 'comp_planner',
-    payloadName: 'TaskSpec v1 (8 Calculator Reqs)',
-    schemaSummary: '{ userReqs: 7, runtimeQualityReqs: ["SAFE_DIV_BY_ZERO"], status: "LOCKED" }',
+    payloadName: 'Compiled TaskSpec Contract',
+    schemaSummary: '{ specReqs: "R1..R7", policyInjectedReq: "R8", entropy: 0.0 }',
     category: 'data_payload',
     activeInStages: [1],
-    description: 'Passes the 7 user calculator requirements plus the 1 Runtime-injected safe-division requirement to the Planner.'
+    description: 'Passes the locked TaskSpec contract from WORKER-S1-INTAKE to WORKER-S2-PLANNER.'
   },
   {
     id: 'edge_policy_planner',
     from: 'comp_policy',
     to: 'comp_planner',
     payloadName: 'ExecutionGuardrails',
-    schemaSummary: '{ sandbox: "LOCAL_ONLY", externalDeploy: false, forbidDynamicCode: true }',
+    schemaSummary: '{ sandboxIsolation: "STRICT", requireBijectiveTests: true }',
     category: 'policy_constraint',
     activeInStages: [1],
-    description: 'Binds workspace guardrails into the Calculator Execution Plan and Completion Contract.'
+    description: 'Binds Tier 2 governance guardrails into the Stage 2 Requirement & ADR Plan.'
   },
   {
     id: 'edge_planner_orchestrator',
     from: 'comp_planner',
     to: 'comp_orchestrator',
-    payloadName: 'ExecutionDAG & Stack Decisions',
-    schemaSummary: '{ stack: "Vanilla TS + Vite", rejected: ["React", "Next.js"], backend: "NONE" }',
+    payloadName: 'ExecutionDAG & Locked ADRs',
+    schemaSummary: '{ requirements: 8, adrsLocked: true, parallelWorkers: ["Role3A", "Role3B"] }',
     category: 'control_flow',
     activeInStages: [1, 2],
-    description: 'Dispatches the calculator build plan and justified architectural decisions to the State-Aware Orchestrator.'
+    description: 'Dispatches the 8 verifiable requirements and locked ADRs to the Parallel Synthesis Orchestrator.'
   },
   {
     id: 'edge_orch_evidence',
     from: 'comp_orchestrator',
     to: 'comp_evidence',
     payloadName: 'ExecutionTelemetry & Provenance (13 items)',
-    schemaSummary: '{ filesCreated: 5, executionEvents: 12, policyChecks: 5, testTraces: 8 }',
+    schemaSummary: '{ checkpoint: "#S3-01", workerA: "Coder", workerB: "TestOracle", records: 13 }',
     category: 'audit_provenance',
     activeInStages: [2, 3],
-    description: 'Streams immutable calculator build logs, AST scan results, and test evidence records into PostgreSQL.'
+    description: 'Streams live Local Model worker telemetries, SHA-256 file hashes, and test traces into the Provenance Ledger.'
   },
   {
     id: 'edge_orch_verifier',
     from: 'comp_orchestrator',
     to: 'comp_verifier',
     payloadName: 'CandidateArtifact & AgentState',
-    schemaSummary: '{ agentReported: "COMPLETE", runtimeState: "VERIFYING", artifactVer: "v1.0" }',
+    schemaSummary: '{ agentReported: "COMPLETE", runtimeState: "VERIFYING", checkpoint: "#S3-01" }',
     category: 'data_payload',
     activeInStages: [2, 3],
-    description: 'Hands off the compiled calculator artifact for independent deterministic verification.'
+    description: 'Hands off immutable Sandbox Checkpoint #S3-01 to the Independent Verifier Oracle (WORKER-S4-ORACLE).'
   },
   {
     id: 'edge_evidence_verifier',
     from: 'comp_evidence',
     to: 'comp_verifier',
     payloadName: 'EvidenceBundle (13/13 Provenance)',
-    schemaSummary: '{ coverage: "13/13", failingEvidenceIds: ["DIV-ZERO-01"] }',
+    schemaSummary: '{ coverage: "13/13", failingInvariants: ["R8 (v1.0)"] }',
     category: 'audit_provenance',
     activeInStages: [3, 4],
-    description: 'Supplies linked calculator evidence records to the Completion Gate so every claim is backed by deterministic proof.'
+    description: 'Supplies the 13 linked provenance records to the Independent Verifier Gate so every claim is backed by execution evidence.'
   },
   {
     id: 'edge_repair_loop',
     from: 'comp_verifier',
     to: 'comp_orchestrator',
-    payloadName: 'TargetedRepairDirective (DIV-ZERO-01)',
-    schemaSummary: '{ failedCheck: "8 ÷ 0 -> Infinity", targetScope: "calc_division_guard_only", preserveState: true }',
+    payloadName: 'TargetedRepairDirective (R8 AST Patch)',
+    schemaSummary: '{ failedReq: "R8", targetAstNode: "surgical_diff_only", retainPassingFiles: true }',
     category: 'feedback_repair',
     activeInStages: [3],
     isRepairLoop: true,
-    description: 'Triggers surgical state-aware repair on the calculator division handler without losing execution state or restarting.'
+    description: 'Triggers WORKER-S4-PATCHER to surgically patch only the failing AST node on retained Checkpoint #S3-01 without full regeneration.'
   },
   {
     id: 'edge_verifier_gate',
     from: 'comp_verifier',
     to: 'comp_evidence',
     payloadName: 'VerifiedCompletionSeal',
-    schemaSummary: '{ requirements: "8/8", checks: "8/8", policies: "4/4", evidence: "13/13", issues: 0 }',
+    schemaSummary: '{ requirements: "8/8", checks: "8/8", evidence: "13/13", sealId: "#SEAL" }',
     category: 'audit_provenance',
     activeInStages: [4],
-    description: 'Seals the final calculator audit trace in PostgreSQL once all 8 acceptance checks and 4 policy checks pass.'
+    description: 'Seals the final audit ledger once all 8/8 independent verification assertions pass on #S3-01-v1.1.'
   },
   {
     id: 'edge_gate_experience',
     from: 'comp_verifier',
     to: 'comp_experience',
     payloadName: 'VerifiedExperienceVector',
-    schemaSummary: '{ context: "TS Web Calculator", repairedTrap: "DIV-ZERO-01 Guard", reusePolicy: "STRICT_CONTEXT_MATCH" }',
+    schemaSummary: '{ knowledgeUnitId: "KU-*", policyHash: "POL-2026-v1", sealVerified: true }',
     category: 'data_payload',
     activeInStages: [4],
-    description: 'Indexes the verified calculator pattern and repaired division guard into pgvector for controlled future reuse.'
+    description: 'Promotes the verified architectural pattern and surgical remediation into the Tier 3 Knowledge Store for Task N+1.'
   }
 ];
 
@@ -723,33 +512,33 @@ export const POLICY_GOVERNANCE_DISPOSITIONS: PolicyDispositionItem[] = [
   {
     disposition: 'ALLOWED',
     badgeColor: 'emerald',
-    calculatorTarget: 'TypeScript + Vanilla Vite Calculator Stack & Local Build',
-    ruleOrContextSource: 'Workspace Preference + Node.js Capability',
-    runtimeAction: 'Permitted without human interruption; recorded as a workspace preference (not a mandatory rule).',
+    calculatorTarget: 'Tier 1 Repository Stack & Existing ORM/Driver Conventions',
+    ruleOrContextSource: 'Tier 1 Repo AST Auto-Resolution (0 Questions Asked)',
+    runtimeAction: 'Automatically resolved from repository manifests (package.json / tsconfig / schema) without interrupting the developer.',
     moduleId: 'comp_policy'
   },
   {
     disposition: 'MODIFIED',
     badgeColor: 'blue',
-    calculatorTarget: 'Calculator TaskSpec v1 (+1 Safe Division Rule)',
-    ruleOrContextSource: 'Runtime Quality Rule (QUAL-POL-02)',
-    runtimeAction: 'Automatically injects REQ-08 (8 ÷ 0 must return controlled "Error" instead of Infinity) alongside the 7 user items.',
+    calculatorTarget: 'TaskSpec Contract (+1 Mandatory Tier 2 Policy Requirement R8)',
+    ruleOrContextSource: 'Tier 2 Organizational Policy Engine (POL-2026-v1)',
+    runtimeAction: 'Automatically injects Requirement R8 (Concurrency / Security / Boundary Fail-Closed Guard) alongside R1–R7.',
     moduleId: 'comp_analyzer'
   },
   {
     disposition: 'HELD_FOR_HUMAN',
     badgeColor: 'orange',
-    calculatorTarget: 'Calculator Target Platform (Web vs. Desktop)',
-    ruleOrContextSource: 'Material Ambiguity Gate (MOD-04)',
-    runtimeAction: 'Halts planning in Step 1 and asks the user because Web vs. Desktop changes the calculator product itself.',
+    calculatorTarget: 'Irreducible Architectural Trade-Off (Stage 1 Blocking Gate)',
+    ruleOrContextSource: 'Deterministic Ambiguity Gate (MOD-04 · WORKER-S1-INTAKE)',
+    runtimeAction: 'Halts Stage 2 planning until the developer selects the target architectural constraint, reducing entropy to 0.00 bits.',
     moduleId: 'comp_analyzer'
   },
   {
     disposition: 'PROHIBITED',
     badgeColor: 'rose',
-    calculatorTarget: 'Dynamic Expression Evaluation (eval() / new Function())',
-    ruleOrContextSource: 'Mandatory Security Policy (SEC-POL-01)',
-    runtimeAction: 'Strictly forbidden in calculator code and verified by static AST scan (EVID-04) before completion.',
+    calculatorTarget: 'Dynamic Code Execution (eval()) & Unverified Direct Release',
+    ruleOrContextSource: 'Mandatory Security & Verification Invariant (SEC-POL-01)',
+    runtimeAction: 'Strictly forbidden in generated artifacts and enforced by static AST scan (EVID-04) and Independent Oracle Gate (MOD-08).',
     moduleId: 'comp_policy'
   }
 ];

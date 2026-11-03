@@ -1,0 +1,11 @@
+{
+  "activePolicyHash": "POL-2026-v1",
+  "llmConfig": {
+    "provider": "ollama",
+    "endpointUrl": "http://localhost:11434",
+    "modelName": "qwen2.5-coder:7b",
+    "temperature": 0.1
+  },
+  "knowledgeUnits": [],
+  "executionHistory": []
+}

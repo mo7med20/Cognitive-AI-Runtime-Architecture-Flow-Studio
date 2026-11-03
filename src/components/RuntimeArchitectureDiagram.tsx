@@ -10,8 +10,11 @@ import {
   SYSTEM_COMPONENTS, getComponentDependencies,
   type DataDependencyEdge, type DependencyCategory, type StageIndex
 } from '../lib/runtimeEngine';
+import { SECodingScenario } from '../lib/seScenariosAndMetamodel';
 
 interface RuntimeArchitectureDiagramProps {
+  isRuntimeIdle?: boolean;
+  activeScenario?: SECodingScenario;
   currentStage: StageIndex;
   repaired: boolean;
   clarifiedPlatform: 'web' | 'desktop' | null;
@@ -24,10 +27,10 @@ interface RuntimeArchitectureDiagramProps {
 const NODE_LAYOUT = [
   { id: 'comp_intake', x: 3, y: 82, icon: Terminal, title: 'Task intake', detail: 'Prompt & workspace', tone: 'blue' },
   { id: 'comp_policy', x: 3, y: 255, icon: ShieldCheck, title: 'Policy engine', detail: 'Security & quality rules', tone: 'purple' },
-  { id: 'comp_experience', x: 3, y: 428, icon: Database, title: 'Experience store', detail: 'Verified patterns · pgvector', tone: 'teal' },
+  { id: 'comp_experience', x: 3, y: 428, icon: Database, title: 'Experience store', detail: 'Verified patterns · Tier 3', tone: 'teal' },
   { id: 'comp_analyzer', x: 28, y: 168, icon: ScanSearch, title: 'Requirement analyzer', detail: 'Clarification → task spec', tone: 'orange' },
   { id: 'comp_planner', x: 53, y: 168, icon: GitBranch, title: 'Planner & router', detail: 'Stack decisions & plan', tone: 'blue' },
-  { id: 'comp_orchestrator', x: 53, y: 428, icon: Workflow, title: 'Execution orchestrator', detail: 'Stateful execution & repair', tone: 'orange' },
+  { id: 'comp_orchestrator', x: 53, y: 428, icon: Workflow, title: 'Execution orchestrator', detail: 'Parallel synth & repair', tone: 'orange' },
   { id: 'comp_evidence', x: 28, y: 428, icon: Fingerprint, title: 'Evidence ledger', detail: '13 provenance records', tone: 'teal' },
   { id: 'comp_verifier', x: 78, y: 298, icon: FileCheck2, title: 'Independent verifier', detail: 'Checks & completion gate', tone: 'teal' }
 ] as const;
@@ -60,6 +63,8 @@ const CONTRACT_ROUTES: Record<string, string> = {
 };
 
 export function RuntimeArchitectureDiagram({
+  isRuntimeIdle = false,
+  activeScenario,
   currentStage, repaired, clarifiedPlatform, selectedComponentId,
   onSelectComponent, dependencyFilter, onChangeDependencyFilter
 }: RuntimeArchitectureDiagramProps) {
@@ -103,7 +108,8 @@ export function RuntimeArchitectureDiagram({
   }
 
   function nodeStatus(id: string) {
-    if (id === 'comp_analyzer' && currentStage === 0) return clarifiedPlatform === 'web' ? 'Web confirmed' : 'Needs input';
+    if (isRuntimeIdle) return 'S0 Standby';
+    if (id === 'comp_analyzer' && currentStage === 0) return clarifiedPlatform === 'web' ? 'Gate locked' : 'Needs input';
     if (id === 'comp_verifier' && currentStage >= 3) return repaired ? 'Verified · 8/8' : 'Blocked · 7/8';
     return stage.primaryComponents.includes(id) ? 'Active this stage' : 'Standby';
   }
@@ -127,10 +133,17 @@ export function RuntimeArchitectureDiagram({
           <div>
             <span className="architecture-eyebrow"><Network size={14} /> SYSTEM TOPOLOGY</span>
             <h2 id="architecture-map-title">One runtime. Every connection visible.</h2>
-            <p>From the first prompt to a verified result. Select a module or connection to follow the data.</p>
+            <p>
+              {isRuntimeIdle
+                ? 'State S0: Runtime Standby — Submit a prompt to watch Local Model roles activate each module.'
+                : `Active Task (${activeScenario?.code || 'LIVE'}): "${activeScenario?.rawPrompt || ''}"`}
+            </p>
           </div>
           <div className="architecture-map-actions">
-            <span className="diagram-stage"><span className="status-dot" />Stage {currentStage + 1} · {stage.shortTitle}</span>
+            <span className="diagram-stage">
+              <span className="status-dot" />
+              {isRuntimeIdle ? 'S0 · Standby (Idle)' : `Stage ${currentStage + 1} · ${stage.shortTitle}`}
+            </span>
             <button type="button" className="diagram-motion-toggle" aria-pressed={motionEnabled} onClick={() => setMotionEnabled(!motionEnabled)}>
               {motionEnabled ? <Pause size={14} /> : <Play size={14} />}
               {motionEnabled ? 'Pause motion' : 'Play motion'}
@@ -182,10 +195,10 @@ export function RuntimeArchitectureDiagram({
             {NODE_LAYOUT.map((node, index) => {
               const module = SYSTEM_COMPONENTS.find(item => item.id === node.id)!;
               const Icon = node.icon;
-              const active = stage.primaryComponents.includes(node.id);
+              const active = !isRuntimeIdle && stage.primaryComponents.includes(node.id);
               const selected = component.id === node.id;
               const status = nodeStatus(node.id);
-              const blocked = node.id === 'comp_verifier' && currentStage >= 3 && !repaired;
+              const blocked = !isRuntimeIdle && node.id === 'comp_verifier' && currentStage >= 3 && !repaired;
               return (
                 <button key={node.id} type="button" data-module-id={node.id} className={`architecture-diagram-node tone-${node.tone} ${selected ? 'is-selected' : ''} ${active ? 'is-active-stage' : ''} ${dependencyFilter !== 'all' && !filteredNodeIds.has(node.id) ? 'is-muted' : ''} ${blocked ? 'is-blocked' : ''}`} style={{ left: `${node.x}%`, top: node.y, '--node-delay': `${index * 45}ms` } as CSSProperties} aria-label={`${module.code}: ${module.name}`} aria-pressed={selected} onClick={() => selectNode(node.id)} onMouseEnter={() => setHoveredNode(node.id)} onMouseLeave={() => setHoveredNode(null)} onFocus={() => setHoveredNode(node.id)} onBlur={() => setHoveredNode(null)}>
                   <span className="diagram-node-port port-left" /><span className="diagram-node-port port-right" /><span className="diagram-node-port port-top" /><span className="diagram-node-port port-bottom" />

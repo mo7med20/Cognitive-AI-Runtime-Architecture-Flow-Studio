@@ -1,10 +1,40 @@
 services:
-  shiftcore-calculator-runtime:
+  shiftcore-runtime:
     build:
       context: .
       dockerfile: Dockerfile
-    image: shiftcore-calculator-runtime:latest
-    container_name: shiftcore-calculator-runtime
+    container_name: shiftcore-runtime
     ports:
-      - "8080:8080"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=qwen2.5-coder:7b
+      - OLLAMA_VERIFIER_MODEL=deepseek-coder:6.7b
+    volumes:
+      - shiftcore_data:/app/data
+    depends_on:
+      - ollama
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: shiftcore-ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_ORIGINS=*
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  shiftcore_data:
+  ollama_models:
