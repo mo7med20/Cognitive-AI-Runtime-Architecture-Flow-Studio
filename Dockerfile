@@ -7,12 +7,12 @@ WORKDIR /app
 
 # Install dependencies first for optimal Docker layer caching
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy application source
 COPY . .
 
-# Run deterministic unit test suite (8/8 tests) and TypeScript verification during build
+# Run deterministic unit test suite (10/10 tests) and TypeScript verification during build
 RUN npx tsx --test src/lib/runtimeEngine.test.ts
 RUN npm run lint
 
@@ -29,8 +29,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV OLLAMA_HOST=http://localhost:11434
-ENV OLLAMA_MODEL=qwen2.5-coder:7b
-ENV OLLAMA_VERIFIER_MODEL=deepseek-coder:6.7b
+ENV OLLAMA_MODEL=qwen3:4b
+ENV OLLAMA_VERIFIER_MODEL=qwen3:4b
 
 # Copy package manifests and installed node_modules from builder
 COPY --from=builder /app/package.json ./package.json
