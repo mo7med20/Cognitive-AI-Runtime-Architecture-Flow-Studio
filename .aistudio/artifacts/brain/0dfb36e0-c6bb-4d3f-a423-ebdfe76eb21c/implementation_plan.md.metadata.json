@@ -1,6 +1,0 @@
-{
-  "summary": "Implementation plan for configuring ShiftCore to support and run the user's installed 4B model (qwen3:4b) for both Coder (Worker A) and Verifier (Worker B) roles. Includes quick-select presets, auto-detection from Ollama's model tags, and environment defaults.",
-  "updatedAt": "2026-11-05T19:54:47.559114068Z",
-  "requestFeedback": true,
-  "userFacing": true
-}
