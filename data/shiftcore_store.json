@@ -3,7 +3,7 @@
   "llmConfig": {
     "provider": "ollama",
     "endpointUrl": "http://localhost:11434",
-    "modelName": "qwen2.5-coder:7b",
+    "modelName": "qwen3:4b",
     "temperature": 0.1
   },
   "knowledgeUnits": [],

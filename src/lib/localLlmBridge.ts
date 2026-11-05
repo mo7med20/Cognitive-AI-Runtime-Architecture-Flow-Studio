@@ -732,7 +732,7 @@ export function reduceLiveProvenanceLedgerFromScenario(
 
   const blueprint = synthesizeDynamicScenarioFromPrompt(
     scenario.rawPrompt,
-    w1?.modelName || 'qwen2.5-coder:7b',
+    w1?.modelName || 'qwen3:4b',
     activePolicyHash,
     []
   );

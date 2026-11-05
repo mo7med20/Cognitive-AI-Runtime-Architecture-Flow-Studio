@@ -46,7 +46,7 @@ const DEFAULT_STORE: PersistentShiftCoreStore = {
   llmConfig: {
     provider: 'ollama',
     endpointUrl: process.env.OLLAMA_HOST || 'http://localhost:11434',
-    modelName: process.env.OLLAMA_MODEL || 'qwen2.5-coder:7b',
+    modelName: process.env.OLLAMA_MODEL || 'qwen3:4b',
     temperature: 0.1
   },
   knowledgeUnits: [],
@@ -201,9 +201,9 @@ async function probeLocalLLM(
   verifierPing: IndividualModelPingResult;
 }> {
   const start = Date.now();
-  const coderModel = coderModelOverride || config.modelName || 'qwen2.5-coder:7b';
+  const coderModel = coderModelOverride || config.modelName || process.env.OLLAMA_MODEL || 'qwen3:4b';
   const verifierModel =
-    verifierModelOverride || process.env.OLLAMA_VERIFIER_MODEL || 'deepseek-coder:6.7b';
+    verifierModelOverride || process.env.OLLAMA_VERIFIER_MODEL || coderModel;
   const baseUrl = config.endpointUrl.replace(/\/+$/, '');
 
   // Ping both Coder and Verifier models independently in parallel

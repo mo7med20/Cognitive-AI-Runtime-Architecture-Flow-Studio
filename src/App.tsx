@@ -81,8 +81,8 @@ export default function App() {
   const [llmConfig, setLlmConfig] = useState<LocalModelRuntimeConfig>({
     provider: 'ollama',
     endpointUrl: 'http://localhost:11434',
-    coderModel: 'qwen2.5-coder:7b',
-    verifierModel: 'deepseek-coder:6.7b',
+    coderModel: 'qwen3:4b',
+    verifierModel: 'qwen3:4b',
     temperature: 0.1
   });
   const [availableLocalModels, setAvailableLocalModels] = useState<string[]>([]);
@@ -92,23 +92,23 @@ export default function App() {
   const [coderWorkerStatus, setCoderWorkerStatus] = useState<IndividualWorkerProbeStatus>({
     workerId: 'WORKER-A-CODER',
     roleLabel: 'Worker A · Coder',
-    modelName: 'qwen2.5-coder:7b',
+    modelName: 'qwen3:4b',
     available: false,
     daemonOnline: false,
     mode: 'DAEMON_OFFLINE',
     latencyMs: 0,
-    statusDetail: 'Worker A (qwen2.5-coder:7b) OFFLINE — Awaiting local model daemon',
+    statusDetail: 'Worker A (qwen3:4b) OFFLINE — Awaiting local model daemon',
     lastCheckedAt: ''
   });
   const [verifierWorkerStatus, setVerifierWorkerStatus] = useState<IndividualWorkerProbeStatus>({
     workerId: 'WORKER-B-VERIFIER',
     roleLabel: 'Worker B · Verifier',
-    modelName: 'deepseek-coder:6.7b',
+    modelName: 'qwen3:4b',
     available: false,
     daemonOnline: false,
     mode: 'DAEMON_OFFLINE',
     latencyMs: 0,
-    statusDetail: 'Worker B (deepseek-coder:6.7b) OFFLINE — Awaiting local model daemon',
+    statusDetail: 'Worker B (qwen3:4b) OFFLINE — Awaiting local model daemon',
     lastCheckedAt: ''
   });
   const [showLlmSettings, setShowLlmSettings] = useState<boolean>(false);
@@ -827,6 +827,68 @@ export default function App() {
                     <option key={m} value={m} />
                   ))}
                 </datalist>
+              </div>
+
+              {/* Quick Model Presets & Auto-Detected Local Models */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#1a2536] text-xs font-mono">
+                <span className="text-[#a2afc3] text-[11px]">Quick Model Presets:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLlmConfig((prev) => ({
+                      ...prev,
+                      coderModel: 'qwen3:4b',
+                      verifierModel: 'qwen3:4b'
+                    }));
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all cursor-pointer ${
+                    llmConfig.coderModel === 'qwen3:4b' && llmConfig.verifierModel === 'qwen3:4b'
+                      ? 'bg-[#53d6ab]/20 text-[#53d6ab] border-[#53d6ab]'
+                      : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#53d6ab]'
+                  }`}
+                >
+                  ⚡ Single Model: qwen3:4b (4B Lightweight · Low VRAM)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLlmConfig((prev) => ({
+                      ...prev,
+                      coderModel: 'qwen2.5-coder:7b',
+                      verifierModel: 'deepseek-coder:6.7b'
+                    }));
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all cursor-pointer ${
+                    llmConfig.coderModel === 'qwen2.5-coder:7b' && llmConfig.verifierModel === 'deepseek-coder:6.7b'
+                      ? 'bg-[#ff8a4c]/20 text-[#ff8a4c] border-[#ff8a4c]'
+                      : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#ff8a4c]'
+                  }`}
+                >
+                  Dual 7B / 6.7B: qwen2.5-coder + deepseek-coder
+                </button>
+
+                {availableLocalModels.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 ml-auto text-[11px]">
+                    <span className="text-[#7c8ca5]">Detected in Ollama:</span>
+                    {availableLocalModels.map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          setLlmConfig((prev) => ({
+                            ...prev,
+                            coderModel: m,
+                            verifierModel: m
+                          }));
+                        }}
+                        className="px-2 py-0.5 rounded bg-[#101724] border border-[#2b3a4f] hover:border-[#53d6ab] text-[#53d6ab] font-bold cursor-pointer"
+                        title={`Set both Coder & Verifier to ${m}`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#1e293b] text-xs font-mono">

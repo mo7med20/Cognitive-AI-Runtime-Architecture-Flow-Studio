@@ -176,7 +176,11 @@ async function withEphemeralOllamaDaemon<T>(fn: (endpointUrl: string) => Promise
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
-          models: [{ name: 'qwen2.5-coder:7b' }, { name: 'deepseek-coder:6.7b' }]
+          models: [
+            { name: 'qwen3:4b' },
+            { name: 'qwen2.5-coder:7b' },
+            { name: 'deepseek-coder:6.7b' }
+          ]
         })
       );
       return;
@@ -419,4 +423,57 @@ test('subscribeToWorkerTokenStream emits real-time STREAM_START, TOKEN_DELTA, an
     assert.ok(snapshot.every((s) => s.connectionSource === 'DIRECT_BROWSER_LOCALHOST'));
   });
 });
+
+test('single 4B model (qwen3:4b) successfully executes both Worker A (Coder) and Worker B (Verifier) roles', async () => {
+  const {
+    probeLocalModelConnection,
+    executeStage1IntakeLive,
+    executeStage3ParallelSynthesisLive,
+    clearWorkerTokenStream,
+    subscribeToWorkerTokenStream
+  } = await import('./localLlmBridge');
+  type StreamEvent = import('./localLlmBridge').WorkerTokenStreamEvent;
+
+  await withEphemeralOllamaDaemon(async (endpointUrl) => {
+    const qwen4bCfg = {
+      provider: 'ollama' as const,
+      endpointUrl,
+      coderModel: 'qwen3:4b',
+      verifierModel: 'qwen3:4b',
+      temperature: 0.1
+    };
+
+    const probe = await probeLocalModelConnection(qwen4bCfg);
+    assert.equal(probe.reachable, true);
+    assert.equal(probe.coderWorkerStatus.modelName, 'qwen3:4b');
+    assert.equal(probe.coderWorkerStatus.available, true);
+    assert.equal(probe.coderWorkerStatus.mode, 'DAEMON_ONLINE');
+
+    assert.equal(probe.verifierWorkerStatus.modelName, 'qwen3:4b');
+    assert.equal(probe.verifierWorkerStatus.available, true);
+    assert.equal(probe.verifierWorkerStatus.mode, 'DAEMON_ONLINE');
+
+    clearWorkerTokenStream();
+    const events: StreamEvent[] = [];
+    const unsub = subscribeToWorkerTokenStream((e) => events.push(e));
+
+    const s1 = await executeStage1IntakeLive(
+      'Implement an in-memory idempotency cache for webhooks',
+      'POL-2026-v1',
+      [],
+      qwen4bCfg
+    );
+    assert.ok(s1.baseScenario.stageFlows.length === 1);
+    assert.equal(s1.telemetry.workerRole, 'STAGE1_INTAKE_ANALYZER');
+
+    const s3 = await executeStage3ParallelSynthesisLive(s1.baseScenario, qwen4bCfg);
+    unsub();
+
+    assert.equal(s3.files.length, 3);
+    assert.ok(events.some((e) => e.modelName === 'qwen3:4b' && e.workerPool === 'CODER_WORKER_A'));
+    assert.ok(events.some((e) => e.modelName === 'qwen3:4b' && e.workerPool === 'VERIFIER_WORKER_B'));
+    assert.ok(events.every((e) => e.modelName === 'qwen3:4b'));
+  });
+});
+
 
