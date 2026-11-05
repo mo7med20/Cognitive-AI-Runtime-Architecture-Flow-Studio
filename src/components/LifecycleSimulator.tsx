@@ -23,6 +23,7 @@ import {
   FastForward,
   FileCode2,
   GitCompare,
+  Layers,
   Loader2,
   Lock,
   Network,
@@ -30,6 +31,7 @@ import {
   Play,
   RotateCcw,
   Send,
+  Shield,
   Sparkles,
   Terminal,
   Zap
@@ -106,6 +108,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
   const [showLiveRoleLogs, setShowLiveRoleLogs] = useState<boolean>(true);
   const [showSystemPromptInLogs, setShowSystemPromptInLogs] = useState<boolean>(false);
   const [selectedWorkerFilter, setSelectedWorkerFilter] = useState<string>('ACTIVE_STAGE');
+  const [layerFilter, setLayerFilter] = useState<'ALL' | 'DYNAMIC_ONLY' | 'STATIC_ONLY'>('ALL');
   const [isStreamPaused, setIsStreamPaused] = useState<boolean>(false);
   const [streamProgress, setStreamProgress] = useState<number>(0);
   const logViewportRef = useRef<HTMLPreElement | null>(null);
@@ -701,6 +704,62 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
           </div>
 
           {/* =========================================================
+              DYNAMIC LIVE VS STATIC GOVERNANCE LAYER SELECTOR & LEGEND
+             ========================================================= */}
+          <div className="mb-4 rounded-2xl border border-[#26374d] bg-[#0c121d] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="font-mono text-xs font-bold text-[#a2afc3] flex items-center gap-1.5">
+                <Layers size={14} className="text-[#8caef9]" />
+                Layer Separation:
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#53d6ab]/15 border border-[#53d6ab]/40 text-[#53d6ab] font-mono text-[11px] font-extrabold">
+                <span className="w-2 h-2 rounded-full bg-[#53d6ab] animate-pulse" />
+                ⚡ DYNAMIC (Live Local Model Output)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#8caef9]/15 border border-[#8caef9]/40 text-[#8caef9] font-mono text-[11px] font-extrabold">
+                🔒 STATIC (Governance Policy & Metamodel)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 font-mono text-xs">
+              <span className="text-[#7c8ca5] text-[11px] mr-1 hidden sm:inline">Highlight Filter:</span>
+              <button
+                type="button"
+                onClick={() => setLayerFilter('ALL')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  layerFilter === 'ALL'
+                    ? 'bg-[#ff8a4c] text-[#0c1018] border-[#ff8a4c]'
+                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#ff8a4c]'
+                }`}
+              >
+                All Layers
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayerFilter('DYNAMIC_ONLY')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  layerFilter === 'DYNAMIC_ONLY'
+                    ? 'bg-[#53d6ab] text-[#0c1018] border-[#53d6ab]'
+                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#53d6ab]'
+                }`}
+              >
+                ⚡ Live Model Only
+              </button>
+              <button
+                type="button"
+                onClick={() => setLayerFilter('STATIC_ONLY')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  layerFilter === 'STATIC_ONLY'
+                    ? 'bg-[#8caef9] text-[#0c1018] border-[#8caef9]'
+                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#8caef9]'
+                }`}
+              >
+                🔒 Static Policy Only
+              </button>
+            </div>
+          </div>
+
+          {/* =========================================================
               LIVE LOCAL MODEL ROLE PROGRESS BAR & SUB-STEP TRACKER
              ========================================================= */}
           <div className="mb-4 rounded-2xl border border-[#ff8a4c]/55 bg-[#101826] p-4 space-y-3 shadow-lg">
@@ -1116,7 +1175,11 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   </article>
 
                   {/* ShiftCore Auto-Resolution Column (Facts reveal progressively: Step 1 -> Fact 1, Step 2 -> All Facts) */}
-                  <article className="md:col-span-7 rounded-2xl border border-[#53d6ab]/50 bg-[#151c28] p-4 space-y-3">
+                  <article className={`md:col-span-7 rounded-2xl border border-[#53d6ab]/50 bg-[#151c28] p-4 space-y-3 ${layerFilter === 'STATIC_ONLY' ? 'opacity-30' : ''}`}>
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#53d6ab]/20 text-[#53d6ab] text-[10px] font-mono font-extrabold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                      ⚡ DYNAMIC · LIVE LOCAL MODEL REDUCTION ({coderModel})
+                    </div>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-[#53d6ab] uppercase">
                         ✓ WORKER-S1-INTAKE ({coderModel}) Auto-Resolution
@@ -1160,6 +1223,16 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               {revealStep >= 3 && (
                 <article className="rounded-2xl border border-[#ff8a4c]/60 bg-gradient-to-r from-[#ff8a4c]/12 to-[#141c29] p-5 space-y-4">
                   <div>
+                    <div className="flex flex-wrap items-center gap-2 mb-2 font-mono text-[10px]">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#53d6ab]/20 text-[#53d6ab] font-extrabold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                        ⚡ DYNAMIC ELICITATION ({coderModel})
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#8caef9]/20 text-[#8caef9] font-extrabold">
+                        <Lock size={11} />
+                        🔒 STATIC ENTROPY CONTRACT (0.00 BITS REQUIRED FOR STAGE 2)
+                      </span>
+                    </div>
                     <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
                       DETERMINISTIC AMBIGUITY GATE ({gate.gateId}) · GENERATED BY WORKER-S1 ({coderModel})
                     </div>
@@ -1239,12 +1312,25 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
             <div className="space-y-4">
               {revealStep >= 1 && (
                 <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-mono text-[10px]">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#53d6ab]/20 text-[#53d6ab] font-extrabold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                      ⚡ DYNAMIC REQUIREMENT REDUCTION ({coderModel})
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#8caef9]/20 text-[#8caef9] font-extrabold">
+                      <Shield size={11} />
+                      🔒 STATIC POLICY INJECTION (POL-2026-v1)
+                    </span>
+                  </div>
                   <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
-                    WORKER-S2-ARCHITECT ({coderModel}) ·PROGRESSIVE REQUIREMENT SYNTHESIS (R1–R8)
+                    WORKER-S2-ARCHITECT ({coderModel}) · PROGRESSIVE REQUIREMENT SYNTHESIS (R1–R8)
                   </div>
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-11 gap-3 items-center">
-                    <div className="md:col-span-6 rounded-xl border border-[#2b3a4f] bg-[#121b28] p-4">
-                      <span className="font-mono text-xs font-bold text-[#8caef9]">
+                    <div className={`md:col-span-6 rounded-xl border border-[#2b3a4f] bg-[#121b28] p-4 ${layerFilter === 'STATIC_ONLY' ? 'opacity-30' : ''}`}>
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#53d6ab]/15 text-[#53d6ab] font-mono text-[9px] font-bold mb-1">
+                        ⚡ DYNAMIC SYNTHESIS
+                      </div>
+                      <span className="font-mono text-xs font-bold text-[#8caef9] block">
                         DEVELOPER & REPO SPEC (R1–R7)
                       </span>
                       <h4 className="mt-1 font-bold text-sm text-white">
@@ -1266,8 +1352,11 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                       +
                     </div>
 
-                    <div className="md:col-span-4 rounded-xl border border-[#ff8a4c]/50 bg-[#ff8a4c]/10 p-4">
-                      <span className="font-mono text-xs font-bold text-[#ffa875]">
+                    <div className={`md:col-span-4 rounded-xl border border-[#ff8a4c]/50 bg-[#ff8a4c]/10 p-4 ${layerFilter === 'DYNAMIC_ONLY' ? 'opacity-30' : ''}`}>
+                      <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#8caef9]/20 text-[#8caef9] font-mono text-[9px] font-bold mb-1">
+                        🔒 STATIC POLICY CONTRACT
+                      </div>
+                      <span className="font-mono text-xs font-bold text-[#ffa875] block">
                         RUNTIME POLICY INJECTION ({failedReq.id})
                       </span>
                       {revealStep >= 2 ? (
@@ -1346,6 +1435,10 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
              ========================================================= */}
           {currentStage === 2 && (
             <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#53d6ab]/20 text-[#53d6ab] font-mono text-[11px] font-extrabold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                ⚡ DYNAMIC · LIVE PARALLEL WORKER SYNTHESIS ({coderModel} ∥ {verifierModel})
+              </div>
               {/* Parallel Dual-Model Role Progress Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <article className="rounded-2xl border border-[#53d6ab]/45 bg-[#131b28] p-4 space-y-2">
@@ -1459,6 +1552,10 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
              ========================================================= */}
           {currentStage === 3 && (
             <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#53d6ab]/20 text-[#53d6ab] font-mono text-[11px] font-extrabold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                ⚡ DYNAMIC · LIVE VERIFICATION ORACLE & SURGICAL AST PATCH ({verifierModel} → {coderModel})
+              </div>
               {revealStep >= 1 && (
                 <div className="adaptive-four grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
@@ -1705,6 +1802,10 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
              ========================================================= */}
           {currentStage === 4 && (
             <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#ff8a4c]/20 text-[#ffa875] font-mono text-[11px] font-extrabold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ff8a4c] animate-pulse" />
+                ⚡ DYNAMIC · LIVE WEBCRYPTO SHA-256 SEAL & KNOWLEDGE EXTRACTOR
+              </div>
               {revealStep >= 1 && (
                 <article className="rounded-2xl border border-[#53d6ab]/50 bg-gradient-to-r from-[#53d6ab]/15 to-[#151c28] p-5 flex flex-wrap items-center justify-between gap-4">
                   <div>

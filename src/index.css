@@ -44,21 +44,20 @@
 .app-shell { min-height: 100dvh; display: flex; flex-direction: column; }
 .skip-link { position: fixed; left: 16px; top: -100px; z-index: 60; padding: 12px 20px; border-radius: 8px; color: #0c1018; background: var(--orange); }
 .skip-link:focus { top: 12px; }
-.app-header { position: sticky; top: 0; z-index: 40; background: #0e131dee; backdrop-filter: blur(20px); border-bottom: 1px solid #242d3d; }
-.header-inner { max-width: 1600px; min-height: 78px; padding: 0 40px; margin: 0 auto; display: flex; align-items: center; gap: 32px; }
-.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-family: var(--font-display); font-size: 23px; font-weight: 800; letter-spacing: -1px; white-space: nowrap; }
-.brand-symbol { color: var(--orange); display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid #ff8a4c40; background: #ff8a4c0c; border-radius: 10px; }
+.app-header { position: sticky; top: 0; z-index: 40; background: #0c1018ee; backdrop-filter: blur(20px); border-bottom: 1px solid #1f2937; }
+.header-inner { max-width: 1680px; min-height: 64px; padding: 0 20px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.8px; white-space: nowrap; flex-shrink: 0; }
+.brand-symbol { color: var(--orange); display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #ff8a4c40; background: #ff8a4c0c; border-radius: 9px; }
 .brand-accent { color: var(--orange); }
-.product-label { font-family: var(--font-sans); font-size: 12px; font-weight: 400; letter-spacing: 0; color: #94a1b5; border-left: 1px solid #334055; margin-left: 8px; padding-left: 18px; }
-.workspace-nav { align-self: stretch; display: flex; justify-content: center; gap: 8px; margin-left: auto; }
-.workspace-tab { position: relative; display: flex; align-items: center; justify-content: center; gap: 9px; padding: 0 18px; color: #a2afc3; font-size: 14px; font-weight: 500; transition: color 160ms, background 160ms; }
-.workspace-tab:hover { color: #f6f7fc; background: #ffffff04; }
-.mobile-tab-label { display: none; }
-.workspace-tab.is-active { color: var(--orange); }
-.workspace-tab.is-active::after { content: ''; position: absolute; bottom: -1px; left: 18px; right: 18px; height: 2px; background: var(--orange); }
-.reset-button { display: flex; align-items: center; justify-content: center; gap: 9px; flex-shrink: 0; min-height: 38px; padding: 6px 14px; border: 1px solid #334055; border-radius: 8px; color: #c1cad9; font-size: 13px; transition: background 160ms, border-color 160ms; }
-.reset-button:hover { background: #1b2534; border-color: #687b97; }
-.main-content { max-width: 1600px; width: 100%; margin: 0 auto; padding: 24px 40px 48px; flex: 1; }
+.product-label { font-family: var(--font-sans); font-size: 11px; font-weight: 400; letter-spacing: 0; color: #94a1b5; border-left: 1px solid #334055; margin-left: 6px; padding-left: 12px; }
+.workspace-nav { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.workspace-tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 11px; border-radius: 7px; color: #94a3b8; font-size: 12px; font-weight: 500; white-space: nowrap; transition: all 150ms ease; border: 1px solid transparent; flex-shrink: 0; }
+.workspace-tab:hover { color: #f8fafc; background: #ffffff0a; }
+.workspace-tab.is-active { color: #ffffff; background: #1a2333; border-color: #3b4f6d; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+.workspace-tab.is-active.is-live { border-color: #53d6ab70; color: #53d6ab; }
+.reset-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; min-height: 32px; padding: 4px 10px; border: 1px solid #2b3a4f; border-radius: 7px; color: #cbd5e1; font-size: 12px; font-weight: 600; transition: background 160ms, border-color 160ms; }
+.reset-button:hover { background: #1b2534; border-color: #ff8a4c80; color: #ff8a4c; }
+.main-content { max-width: 1680px; width: 100%; margin: 0 auto; padding: 18px 20px 48px; flex: 1; }
 .page-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; color: #8593aa; font-size: 12px; }
 .page-breadcrumb svg { color: #55657e; }
 .breadcrumb-current { color: #bbc5d5; }

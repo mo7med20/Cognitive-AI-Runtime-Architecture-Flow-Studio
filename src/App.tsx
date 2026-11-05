@@ -19,6 +19,7 @@ import {
   Presentation,
   RefreshCw,
   RotateCcw,
+  Scale,
   Send,
   Settings2,
   Workflow
@@ -54,9 +55,11 @@ import { TraceabilityMatrixView } from './components/TraceabilityMatrixView';
 import { AbstractModelView } from './components/AbstractModelView';
 import { KnowledgeLifecycleView } from './components/KnowledgeLifecycleView';
 import { SlidesDeckModal, WorkspaceTabId } from './components/SlidesDeckModal';
+import { ArchitectureGuideModal } from './components/ArchitectureGuideModal';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTabId>('flow_studio');
+  const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
 
   // Strictly starts in clean S0 Idle state (nothing pre-populated statically until user submits a prompt)
   const [isRuntimeIdle, setIsRuntimeIdle] = useState<boolean>(true);
@@ -501,13 +504,14 @@ export default function App() {
     });
   };
 
-  const workspaceTabs = [
-    { id: 'flow_studio' as const, label: 'Live Runtime (S0→S5)', shortLabel: 'Runtime', icon: Workflow },
-    { id: 'abstract_model' as const, label: 'Abstract SE model', shortLabel: 'Abstract Model', icon: Boxes },
-    { id: 'architecture' as const, label: 'System map', shortLabel: 'Map', icon: Network },
-    { id: 'knowledge_graph' as const, label: 'Knowledge graph', shortLabel: 'Knowledge', icon: Database },
-    { id: 'traceability' as const, label: 'Proof & Lineage', shortLabel: 'Proof', icon: FileCheck2 }
+  const liveTab = { id: 'flow_studio' as const, label: 'Live Runtime', shortLabel: 'Live', badge: 'S0→S5', icon: Workflow };
+  const staticTabs = [
+    { id: 'abstract_model' as const, label: 'Model', fullLabel: 'Abstract Model', icon: Boxes },
+    { id: 'architecture' as const, label: 'Map', fullLabel: 'System Map', icon: Network },
+    { id: 'knowledge_graph' as const, label: 'Knowledge', fullLabel: 'Knowledge Graph', icon: Database },
+    { id: 'traceability' as const, label: 'Proof', fullLabel: 'Proof & Lineage', icon: FileCheck2 }
   ];
+  const workspaceTabs = [liveTab, ...staticTabs];
 
   return (
     <div className="app-shell">
@@ -526,7 +530,7 @@ export default function App() {
             }}
           >
             <span className="brand-symbol">
-              <Box size={22} strokeWidth={1.7} />
+              <Box size={20} strokeWidth={1.8} />
             </span>
             <span>
               Shift<span className="brand-accent">Core</span>
@@ -534,117 +538,85 @@ export default function App() {
           </a>
 
           <nav className="workspace-nav" aria-label="Workspace views">
-            {workspaceTabs.map(({ id, label, shortLabel, icon: Icon }) => (
+            <div className="flex items-center gap-0.5 bg-[#0b1018] p-1 rounded-xl border border-[#212d3f]">
+              {/* Group 1: Live Engine */}
               <button
-                key={id}
                 type="button"
-                className={`workspace-tab ${activeTab === id ? 'is-active' : ''}`}
-                aria-label={label}
-                aria-current={activeTab === id ? 'page' : undefined}
-                onClick={() => switchWorkspaceTab(id)}
+                className={`workspace-tab ${activeTab === liveTab.id ? 'is-active is-live' : ''}`}
+                aria-label={liveTab.label}
+                aria-current={activeTab === liveTab.id ? 'page' : undefined}
+                onClick={() => switchWorkspaceTab(liveTab.id)}
               >
-                <Icon size={16} aria-hidden="true" />
-                <span className="desktop-tab-label">{label}</span>
-                <span className="mobile-tab-label">{shortLabel}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                <Workflow size={13} className="text-[#53d6ab]" />
+                <span>Live Runtime</span>
+                <span className="text-[10px] font-mono font-bold text-[#53d6ab] bg-[#53d6ab]/15 px-1 py-0.2 rounded">
+                  S0→S5
+                </span>
               </button>
-            ))}
+
+              <div className="h-4 w-px bg-[#26354a] mx-0.5" />
+
+              {/* Group 2: Formal Metamodel */}
+              {staticTabs.map(({ id, label, fullLabel, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`workspace-tab ${activeTab === id ? 'is-active' : ''}`}
+                  aria-label={fullLabel}
+                  aria-current={activeTab === id ? 'page' : undefined}
+                  onClick={() => switchWorkspaceTab(id)}
+                >
+                  <Icon size={13} aria-hidden="true" />
+                  <span className="hidden 2xl:inline">{fullLabel}</span>
+                  <span className="2xl:hidden">{label}</span>
+                </button>
+              ))}
+            </div>
           </nav>
 
-          <div className="flex items-center gap-2">
-            {/* Independent Header Visual Status Indicators for Worker A (Coder) & Worker B (Verifier) */}
-            <div
-              className="hidden xl:flex items-center gap-1.5 mr-1"
-              role="group"
-              aria-label="Individual Local Worker Availability Indicators"
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Consolidated Local Worker Availability Pill */}
+            <button
+              type="button"
+              data-testid="header-coder-status"
+              onClick={() => setShowLlmSettings(!showLlmSettings)}
+              title={`Worker A (Coder): ${coderWorkerStatus.modelName} | Worker B (Verifier): ${verifierWorkerStatus.modelName} — Click to configure`}
+              className={`px-2 py-1 rounded-lg border font-mono text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
+                llmReachable
+                  ? 'border-[#53d6ab]/40 bg-[#53d6ab]/10 text-[#53d6ab]'
+                  : 'border-[#fb8797]/40 bg-[#fb8797]/10 text-[#fb8797]'
+              }`}
             >
-              <button
-                type="button"
-                data-testid="header-coder-status"
-                onClick={() => runLocalModelProbe(llmConfig)}
-                title={`${coderWorkerStatus.statusDetail} — Click to re-ping Coder & Verifier models`}
-                className={`px-2.5 py-1.5 rounded-xl border font-mono text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
-                  !coderWorkerStatus.available
-                    ? 'border-[#fb8797]/50 bg-[#fb8797]/15 text-[#fb8797]'
-                    : coderWorkerStatus.mode === 'DAEMON_ONLINE'
-                      ? 'border-[#53d6ab]/60 bg-[#53d6ab]/15 text-[#53d6ab]'
-                      : coderWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                        ? 'border-[#ff8a4c]/60 bg-[#ff8a4c]/15 text-[#ffa875]'
-                        : 'border-[#53d6ab]/45 bg-[#0e1520] text-[#53d6ab] hover:border-[#53d6ab]'
+              <span
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  isProbingWorkers ? 'bg-[#ff8a4c] animate-ping' : llmReachable ? 'bg-[#53d6ab]' : 'bg-[#fb8797]'
                 }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    isProbingWorkers
-                      ? 'bg-[#ff8a4c] animate-ping'
-                      : !coderWorkerStatus.available
-                        ? 'bg-[#fb8797]'
-                        : coderWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                          ? 'bg-[#ff8a4c]'
-                          : 'bg-[#53d6ab]'
-                  }`}
-                />
-                <span className="text-[#a2afc3]">Coder:</span>
-                <strong className="text-white">{coderWorkerStatus.modelName}</strong>
-                <span className="px-1.5 py-0.2 rounded bg-[#162234] text-[10px] font-extrabold uppercase">
-                  {coderWorkerStatus.mode === 'DAEMON_ONLINE'
-                    ? 'ONLINE'
-                    : coderWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                      ? 'NOT PULLED'
-                      : 'OFFLINE'}
-                </span>
-                {coderWorkerStatus.latencyMs > 0 && (
-                  <span className="text-[#8caef9] tabular-nums">{coderWorkerStatus.latencyMs}ms</span>
-                )}
-              </button>
+              />
+              <strong className="text-white font-mono">{llmConfig.coderModel}</strong>
+              <span className="text-[9px] px-1 py-0.2 rounded font-extrabold bg-[#0b121e]">
+                {llmReachable ? 'ONLINE' : 'OFFLINE'}
+              </span>
+            </button>
 
-              <button
-                type="button"
-                data-testid="header-verifier-status"
-                onClick={() => runLocalModelProbe(llmConfig)}
-                title={`${verifierWorkerStatus.statusDetail} — Click to re-ping Coder & Verifier models`}
-                className={`px-2.5 py-1.5 rounded-xl border font-mono text-[11px] flex items-center gap-1.5 transition-all cursor-pointer ${
-                  !verifierWorkerStatus.available
-                    ? 'border-[#fb8797]/50 bg-[#fb8797]/15 text-[#fb8797]'
-                    : verifierWorkerStatus.mode === 'DAEMON_ONLINE'
-                      ? 'border-[#8caef9]/60 bg-[#8caef9]/15 text-[#8caef9]'
-                      : verifierWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                        ? 'border-[#ff8a4c]/60 bg-[#ff8a4c]/15 text-[#ffa875]'
-                        : 'border-[#8caef9]/45 bg-[#0e1520] text-[#8caef9] hover:border-[#8caef9]'
-                }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    isProbingWorkers
-                      ? 'bg-[#ff8a4c] animate-ping'
-                      : !verifierWorkerStatus.available
-                        ? 'bg-[#fb8797]'
-                        : verifierWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                          ? 'bg-[#ff8a4c]'
-                          : 'bg-[#8caef9]'
-                  }`}
-                />
-                <span className="text-[#a2afc3]">Verifier:</span>
-                <strong className="text-white">{verifierWorkerStatus.modelName}</strong>
-                <span className="px-1.5 py-0.2 rounded bg-[#162234] text-[10px] font-extrabold uppercase">
-                  {verifierWorkerStatus.mode === 'DAEMON_ONLINE'
-                    ? 'ONLINE'
-                    : verifierWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                      ? 'NOT PULLED'
-                      : 'OFFLINE'}
-                </span>
-                {verifierWorkerStatus.latencyMs > 0 && (
-                  <span className="text-[#53d6ab] tabular-nums">{verifierWorkerStatus.latencyMs}ms</span>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowGuideModal(true)}
+              className="px-2 py-1 rounded-lg border border-[#8caef9]/40 bg-[#8caef9]/10 hover:bg-[#8caef9]/20 text-[#8caef9] font-mono text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Explainer: How ShiftCore separates the Static Metamodel from the Live Dynamic Engine"
+            >
+              <Scale size={13} />
+              <span className="hidden sm:inline">Explainer</span>
+            </button>
 
             <button
               type="button"
               onClick={() => setIsSlidesOpen(true)}
-              className="px-3 py-2 rounded-xl border border-[#ff8a4c]/50 bg-[#ff8a4c]/15 hover:bg-[#ff8a4c]/25 text-[#ffa875] font-mono text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2 py-1 rounded-lg border border-[#ff8a4c]/40 bg-[#ff8a4c]/10 hover:bg-[#ff8a4c]/20 text-[#ffa875] font-mono text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="10-Slide Academic Defense"
             >
-              <Presentation size={15} />
-              <span className="hidden sm:inline">10-Slide Defense</span>
+              <Presentation size={13} />
+              <span className="hidden sm:inline">Defense</span>
             </button>
 
             <button
@@ -653,8 +625,8 @@ export default function App() {
               onClick={handleResetToIdleRuntime}
               title="Reset Runtime to clean S0 Idle State"
             >
-              <RotateCcw size={15} aria-hidden="true" />
-              <span className="hidden md:inline">Reset to S0 (Empty)</span>
+              <RotateCcw size={13} aria-hidden="true" />
+              <span>Reset</span>
             </button>
           </div>
         </div>
@@ -925,82 +897,67 @@ export default function App() {
             </div>
           )}
 
-          {/* Top Live Prompt Bar + Reference SE Scenarios */}
-          <div className="space-y-2.5">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (customPromptInput.trim()) {
-                  handleStartRuntimeWithPrompt(customPromptInput);
-                  setCustomPromptInput('');
-                }
-              }}
-              className="flex flex-col md:flex-row gap-2.5"
-            >
-              <input
-                type="text"
-                value={customPromptInput}
-                onChange={(e) => setCustomPromptInput(e.target.value)}
-                placeholder="Enter ANY Software Engineering task prompt to start Step 1 Role (S0 → S1)..."
-                className="flex-1 rounded-xl border border-[#304462] bg-[#0d131d] px-3.5 py-2.5 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
-              />
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <button
-                  type="submit"
-                  disabled={isStageExecuting || !customPromptInput.trim()}
-                  className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Send size={13} />
-                  <span>Start Step 1 Role (S0→S1)</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isStageExecuting}
-                  onClick={() =>
-                    handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+          {/* Top Live Prompt Bar (Active during workflow) vs S0 Quick Tip */}
+          {!isRuntimeIdle ? (
+            <div className="space-y-2.5 pt-2 border-t border-[#233144]">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (customPromptInput.trim()) {
+                    handleStartRuntimeWithPrompt(customPromptInput);
+                    setCustomPromptInput('');
                   }
-                  className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  {isStageExecuting ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Running Live Roles...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} />
-                      <span>Auto-Execute All 5 Roles (S1→S5)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Quick SE Scenario Selector Buttons */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1">
-              <span className="font-mono text-[11px] text-[#8caef9] mr-1">
-                Start Progressive Workflow with Reference Task:
-              </span>
-              {Object.values(SE_CODING_SCENARIOS).map((scen) => {
-                const isSelected = !isRuntimeIdle && activeScenario.id === scen.id;
-                return (
+                }}
+                className="flex flex-col md:flex-row gap-2.5"
+              >
+                <input
+                  type="text"
+                  value={customPromptInput}
+                  onChange={(e) => setCustomPromptInput(e.target.value)}
+                  placeholder="Enter a new SE task prompt to re-trigger Stage 1 Role (S0 → S1)..."
+                  className="flex-1 rounded-xl border border-[#304462] bg-[#0d131d] px-3.5 py-2.5 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
+                />
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   <button
-                    key={scen.id}
+                    type="submit"
+                    disabled={isStageExecuting || !customPromptInput.trim()}
+                    className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <Send size={13} />
+                    <span>Run New Task (S0→S1)</span>
+                  </button>
+                  <button
                     type="button"
                     disabled={isStageExecuting}
-                    onClick={() => handleStartRuntimeWithPrompt(scen.rawPrompt)}
-                    className={`px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-[#ff8a4c] text-[#0c1018] border-[#ff8a4c]'
-                        : 'bg-[#0e131d] text-[#c8d3e2] border-[#263448] hover:border-[#ff8a4c]'
-                    }`}
+                    onClick={() =>
+                      handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+                    }
+                    className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    {scen.code}: {scen.badgeLabel}
+                    {isStageExecuting ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" />
+                        <span>Running Roles...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play size={14} />
+                        <span>Auto-Execute All 5 Roles</span>
+                      </>
+                    )}
                   </button>
-                );
-              })}
+                </div>
+              </form>
             </div>
-          </div>
+          ) : (
+            <div className="pt-2 border-t border-[#202d3e] flex items-center justify-between text-xs font-mono text-[#8caef9]">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#ff8a4c] animate-pulse" />
+                <span>Ready for Prompt: Enter a task below in the Command Center to start Stage 1 Intake Role.</span>
+              </div>
+              <span className="text-[11px] text-[#71829a] hidden sm:inline">Zero static results pre-loaded (S0 Idle)</span>
+            </div>
+          )}
         </section>
 
         {/* Overview Hero (Reflects S0 Idle State vs Active Runtime Session) */}
@@ -1226,6 +1183,12 @@ export default function App() {
           }
         }}
         onJumpToTab={switchWorkspaceTab}
+      />
+
+      <ArchitectureGuideModal
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+        activeModelName={llmConfig.coderModel}
       />
 
       <footer className="app-footer">
