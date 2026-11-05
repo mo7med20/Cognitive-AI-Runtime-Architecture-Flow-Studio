@@ -8,10 +8,15 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(import.meta.dirname, '.'),
       },
     },
     server: {
+      host: '0.0.0.0',
+      allowedHosts: [
+        '.trycloudflare.com',
+        ...(process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [])
+      ],
       // HMR is disabled in AI Studio to prevent WebSocket errors in the preview iframe.
       hmr: false,
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

@@ -112,7 +112,7 @@ async function pingSingleModelOnDaemon(
 ): Promise<IndividualModelPingResult> {
   const start = Date.now();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1600);
+  const timeout = setTimeout(() => controller.abort(), 4000);
 
   try {
     if (provider === 'ollama') {
@@ -213,7 +213,7 @@ async function probeLocalLLM(
   ]);
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1600);
+  const timeout = setTimeout(() => controller.abort(), 4000);
 
   try {
     if (config.provider === 'ollama') {
@@ -294,7 +294,7 @@ async function generateCodeWithLocalLLMIfReachable(
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 4500);
+  const timeout = setTimeout(() => controller.abort(), 30000);
 
   try {
     const baseUrl = config.endpointUrl.replace(/\/+$/, '');
@@ -309,7 +309,8 @@ async function generateCodeWithLocalLLMIfReachable(
           model: config.modelName,
           prompt: `${systemInstruction}\nTask: ${prompt}`,
           stream: false,
-          options: { temperature: config.temperature, num_predict: 120 }
+          think: false,
+          options: { temperature: config.temperature, num_predict: 200 }
         }),
         signal: controller.signal
       });
@@ -463,7 +464,7 @@ async function startServer() {
     const temperature = config?.temperature ?? store.llmConfig.temperature;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+    const timeout = setTimeout(() => controller.abort(), 60000);
     try {
       if (provider === 'ollama') {
         const ollamaRes = await fetch(`${baseUrl}/api/chat`, {
@@ -476,14 +477,16 @@ async function startServer() {
               { role: 'user', content: userPrompt }
             ],
             stream: false,
-            options: { temperature, num_predict: maxTokens }
+            think: false,
+            options: { temperature, num_predict: Math.max(maxTokens, 450) }
           }),
           signal: controller.signal
         });
         clearTimeout(timeout);
         if (ollamaRes.ok) {
-          const json = (await ollamaRes.json()) as { message?: { content?: string } };
-          res.json({ success: true, text: (json.message?.content || '').trim() });
+          const json = (await ollamaRes.json()) as { message?: { content?: string; thinking?: string } };
+          const text = (json.message?.content || json.message?.thinking || '').trim();
+          res.json({ success: !!text, text });
           return;
         }
       } else {
@@ -497,14 +500,15 @@ async function startServer() {
               { role: 'user', content: userPrompt }
             ],
             temperature,
-            max_tokens: maxTokens
+            max_tokens: Math.max(maxTokens, 450)
           }),
           signal: controller.signal
         });
         clearTimeout(timeout);
         if (oaiRes.ok) {
           const json = (await oaiRes.json()) as { choices?: Array<{ message?: { content?: string } }> };
-          res.json({ success: true, text: (json.choices?.[0]?.message?.content || '').trim() });
+          const text = (json.choices?.[0]?.message?.content || '').trim();
+          res.json({ success: !!text, text });
           return;
         }
       }
@@ -680,6 +684,10 @@ async function startServer() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
+        allowedHosts: [
+          '.trycloudflare.com',
+          ...(process.env.ALLOWED_HOSTS ? process.env.ALLOWED_HOSTS.split(',').map((h) => h.trim()) : [])
+        ],
         hmr: {
           server: httpServer
         },

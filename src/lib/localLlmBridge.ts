@@ -271,67 +271,65 @@ async function pingWorkerModelIndependently(
     };
   }
 
-  // Direct ping when backend route is not mounted (e.g. Node unit test environment)
-  if (typeof window === 'undefined') {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1500);
-    try {
-      if (config.provider === 'ollama') {
-        const res = await fetch(`${baseUrl}/api/show`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: modelName }),
-          signal: controller.signal
-        });
-        clearTimeout(timer);
-        const latencyMs = Math.max(1, Math.round(performance.now() - start));
-        if (res.ok) {
-          return {
-            workerId,
-            roleLabel,
-            modelName,
-            available: true,
-            daemonOnline: true,
-            mode: 'DAEMON_ONLINE',
-            latencyMs,
-            statusDetail: `${roleLabel} (${modelName}) online on Ollama (${latencyMs}ms)`,
-            lastCheckedAt: nowIso
-          };
-        }
-        if (res.status === 404) {
-          return {
-            workerId,
-            roleLabel,
-            modelName,
-            available: false,
-            daemonOnline: true,
-            mode: 'MODEL_NOT_PULLED',
-            latencyMs,
-            statusDetail: `Ollama online, but ${modelName} is not pulled`,
-            lastCheckedAt: nowIso
-          };
-        }
-      } else {
-        const res = await fetch(`${baseUrl}/models`, { signal: controller.signal });
-        clearTimeout(timer);
-        const latencyMs = Math.max(1, Math.round(performance.now() - start));
-        if (res.ok) {
-          return {
-            workerId,
-            roleLabel,
-            modelName,
-            available: true,
-            daemonOnline: true,
-            mode: 'DAEMON_ONLINE',
-            latencyMs,
-            statusDetail: `${roleLabel} (${modelName}) online (${latencyMs}ms)`,
-            lastCheckedAt: nowIso
-          };
-        }
-      }
-    } catch {
+  // Direct ping when backend route is not mounted (e.g. Node unit test environment or direct browser probe)
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 2500);
+  try {
+    if (config.provider === 'ollama') {
+      const res = await fetch(`${baseUrl}/api/show`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: modelName }),
+        signal: controller.signal
+      });
       clearTimeout(timer);
+      const latencyMs = Math.max(1, Math.round(performance.now() - start));
+      if (res.ok) {
+        return {
+          workerId,
+          roleLabel,
+          modelName,
+          available: true,
+          daemonOnline: true,
+          mode: 'DAEMON_ONLINE',
+          latencyMs,
+          statusDetail: `${roleLabel} (${modelName}) online on Ollama (${latencyMs}ms)`,
+          lastCheckedAt: nowIso
+        };
+      }
+      if (res.status === 404) {
+        return {
+          workerId,
+          roleLabel,
+          modelName,
+          available: false,
+          daemonOnline: true,
+          mode: 'MODEL_NOT_PULLED',
+          latencyMs,
+          statusDetail: `Ollama online, but ${modelName} is not pulled`,
+          lastCheckedAt: nowIso
+        };
+      }
+    } else {
+      const res = await fetch(`${baseUrl}/models`, { signal: controller.signal });
+      clearTimeout(timer);
+      const latencyMs = Math.max(1, Math.round(performance.now() - start));
+      if (res.ok) {
+        return {
+          workerId,
+          roleLabel,
+          modelName,
+          available: true,
+          daemonOnline: true,
+          mode: 'DAEMON_ONLINE',
+          latencyMs,
+          statusDetail: `${roleLabel} (${modelName}) online (${latencyMs}ms)`,
+          lastCheckedAt: nowIso
+        };
+      }
     }
+  } catch {
+    clearTimeout(timer);
   }
 
   return {
@@ -468,7 +466,12 @@ async function callLocalModelRaw(
 }> {
   const start = performance.now();
   const baseUrl = config.endpointUrl.replace(/\/+$/, '');
-  const canTryDirect = isDirectLocalhostReachable || typeof window === 'undefined';
+  const isRemoteClient =
+    typeof window !== 'undefined' &&
+    window.location.hostname !== 'localhost' &&
+    window.location.hostname !== '127.0.0.1' &&
+    (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'));
+  const canTryDirect = !isRemoteClient && (isDirectLocalhostReachable || typeof window === 'undefined' || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1'));
 
   if (streamMeta) {
     emitWorkerTokenEvent({
@@ -485,7 +488,7 @@ async function callLocalModelRaw(
       tokensPerSec: 0,
       elapsedMs: 0,
       systemPromptSent: systemPrompt,
-      connectionSource: canTryDirect ? 'DIRECT_BROWSER_LOCALHOST' : 'OFFLINE_NO_DAEMON',
+      connectionSource: canTryDirect ? 'DIRECT_BROWSER_LOCALHOST' : 'BACKEND_PROXY',
       timestamp: new Date().toISOString()
     });
   }
@@ -494,7 +497,7 @@ async function callLocalModelRaw(
   if (canTryDirect) {
     try {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 9500);
+      const timer = setTimeout(() => controller.abort(), 60000);
 
       if (config.provider === 'ollama') {
         const res = await fetch(`${baseUrl}/api/chat`, {
@@ -507,9 +510,10 @@ async function callLocalModelRaw(
               { role: 'user', content: userPrompt }
             ],
             stream: true,
+            think: false,
             options: {
               temperature: config.temperature,
-              num_predict: maxTokens
+              num_predict: Math.max(maxTokens, 450)
             }
           }),
           signal: controller.signal
@@ -528,10 +532,15 @@ async function callLocalModelRaw(
             for (const line of lines) {
               try {
                 const parsed = JSON.parse(line) as {
-                  message?: { content?: string };
+                  message?: { content?: string; thinking?: string };
                   response?: string;
+                  thinking?: string;
                 };
-                const token = parsed.message?.content ?? parsed.response ?? '';
+                const msg = parsed.message;
+                const token =
+                  (msg?.content !== undefined && msg?.content !== '')
+                    ? msg.content
+                    : (msg?.thinking || parsed.response || parsed.thinking || '');
                 if (token) {
                   accumulated += token;
                   streamedLive = true;
@@ -564,6 +573,7 @@ async function callLocalModelRaw(
           }
           const content = accumulated.trim();
           if (content) {
+            isDirectLocalhostReachable = true;
             return {
               success: true,
               source: 'DIRECT_BROWSER_LOCALHOST',
@@ -574,9 +584,10 @@ async function callLocalModelRaw(
             };
           }
         } else if (res.ok) {
-          const json = (await res.json()) as { message?: { content?: string } };
-          const content = (json.message?.content || '').trim();
+          const json = (await res.json()) as { message?: { content?: string; thinking?: string } };
+          const content = (json.message?.content || json.message?.thinking || '').trim();
           if (content) {
+            isDirectLocalhostReachable = true;
             return {
               success: true,
               source: 'DIRECT_BROWSER_LOCALHOST',
@@ -598,7 +609,7 @@ async function callLocalModelRaw(
               { role: 'user', content: userPrompt }
             ],
             temperature: config.temperature,
-            max_tokens: maxTokens
+            max_tokens: Math.max(maxTokens, 450)
           }),
           signal: controller.signal
         });
@@ -607,6 +618,7 @@ async function callLocalModelRaw(
           const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
           const content = (json.choices?.[0]?.message?.content || '').trim();
           if (content) {
+            isDirectLocalhostReachable = true;
             return {
               success: true,
               source: 'DIRECT_BROWSER_LOCALHOST',
@@ -633,7 +645,7 @@ async function callLocalModelRaw(
         modelToUse,
         systemPrompt,
         userPrompt,
-        maxTokens
+        maxTokens: Math.max(maxTokens, 450)
       })
     });
     if (res.ok) {
@@ -678,6 +690,24 @@ async function callLocalModelRaw(
   throw new Error(
     `Local model ${modelToUse} at ${config.endpointUrl} is OFFLINE. Start your local model daemon (e.g., OLLAMA_ORIGINS="*" ollama serve) to run ${streamMeta?.workerId || 'this stage'}.`
   );
+}
+
+export function extractCleanModelOutput(text: string): string {
+  if (!text) return '';
+  const stripped = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  return stripped || text.trim();
+}
+
+export function extractJsonFromModelOutput<T = any>(text: string): T | null {
+  if (!text) return null;
+  const clean = extractCleanModelOutput(text);
+  const match = clean.match(/\{[\s\S]*\}/) || text.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  try {
+    return JSON.parse(match[0]) as T;
+  } catch {
+    return null;
+  }
 }
 
 export async function computeBrowserSha256Short(input: string): Promise<string> {
@@ -899,9 +929,15 @@ Respond with JSON: { "question": "...", "whyUnresolvable": "...", "option1Label"
   const autoResolvedFacts = structuredClone(fullBlueprint.elicitation.autoResolvedFacts);
 
   try {
-    const jsonMatch = llmRes.text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = extractJsonFromModelOutput<{
+      question?: string;
+      whyUnresolvable?: string;
+      option1Label?: string;
+      option1Constraint?: string;
+      option2Label?: string;
+      option2Constraint?: string;
+    }>(llmRes.text);
+    if (parsed) {
       if (parsed.question) blockingGate.question = parsed.question;
       if (parsed.whyUnresolvable) blockingGate.whyUnresolvableFromRepo = parsed.whyUnresolvable;
       if (parsed.option1Label && blockingGate.options[0]) {
@@ -1537,9 +1573,12 @@ Distill the verified surgical repair pattern from ${scenario.code} into a reusab
   };
 
   try {
-    const jsonMatch = llmRes.text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = extractJsonFromModelOutput<{
+      patternName?: string;
+      reusableAstTemplate?: string;
+      applicableWhen?: string;
+    }>(llmRes.text);
+    if (parsed) {
       if (parsed.patternName) promotedUnit.patternName = parsed.patternName;
       if (parsed.reusableAstTemplate) promotedUnit.reusableAstTemplate = parsed.reusableAstTemplate;
       if (parsed.applicableWhen) promotedUnit.applicabilityTrigger = parsed.applicableWhen;

@@ -6,6 +6,73 @@
     "modelName": "qwen3:4b",
     "temperature": 0.1
   },
-  "knowledgeUnits": [],
+  "knowledgeUnits": [
+    {
+      "id": "KU-204",
+      "patternName": "IEEE-754 Precision Normalization & Zero-Divisor Guard",
+      "domainTags": [
+        "arithmetic",
+        "ieee754",
+        "validation",
+        "ui-widget"
+      ],
+      "applicabilityTrigger": "Any client or server numeric calculation helper performing division or decimal addition.",
+      "reusableAstTemplate": "if (b === 0) return \"ERR_DIV_BY_ZERO\"; return String(Number((a / b).toFixed(8)));",
+      "verificationAssertions": [
+        "0.1 + 0.2 must equal \"0.3\"",
+        "Division by 0 must return explicit error token instead of Infinity"
+      ],
+      "sourceCheckpointId": "#S3-01-v1.1",
+      "sourceSealId": "#SEAL-F2CE",
+      "policyHash": "POL-2026-v1",
+      "createdAt": "2026-11-05T21:35:06.917Z",
+      "reuseCount": 1
+    },
+    {
+      "id": "KU-202",
+      "patternName": "Atomic Redis Lua Compare-And-Swap Token Rotation with Bounded Grace Window",
+      "domainTags": [
+        "auth",
+        "jwt",
+        "redis",
+        "lua",
+        "concurrency",
+        "security"
+      ],
+      "applicabilityTrigger": "Distributed session, OAuth2 refresh token, or one-time nonce rotation subject to multi-tab network bursts.",
+      "reusableAstTemplate": "redis.eval(ATOMIC_ROTATE_LUA, { keys: [familyKey], arguments: [incomingJti, nextJti, nowMs, graceMs] })",
+      "verificationAssertions": [
+        "Simultaneous burst with identical JTI returns 1 ROTATED_NEW + N-1 GRACE_WINDOW_REPLAY",
+        "Ancestor token reuse outside grace window sets revoked=1 on entire family"
+      ],
+      "sourceCheckpointId": "#S3-01-v1.1",
+      "sourceSealId": "#SEAL-1FB2",
+      "policyHash": "POL-2026-v1",
+      "createdAt": "2026-11-05T21:30:06.220Z",
+      "reuseCount": 3
+    },
+    {
+      "id": "KU-201",
+      "patternName": "Serializable Pessimistic Row-Lock + Idempotent Mutation Pattern",
+      "domainTags": [
+        "payments",
+        "concurrency",
+        "prisma",
+        "idempotency",
+        "postgresql"
+      ],
+      "applicabilityTrigger": "Any financial or inventory balance mutation endpoint where concurrent requests could violate a non-negative balance invariant.",
+      "reusableAstTemplate": "prisma.$transaction(async (tx) => { await tx.$queryRaw`SELECT ... FOR UPDATE`; ... }, { isolationLevel: Serializable })",
+      "verificationAssertions": [
+        "Parallel Promise.allSettled race probe must reject second over-balance request",
+        "Duplicate Idempotency-Key must return IDEMPOTENT_REPLAY without side effects"
+      ],
+      "sourceCheckpointId": "#S3-01-v1.1",
+      "sourceSealId": "#SEAL-EF98",
+      "policyHash": "POL-2026-v1",
+      "createdAt": "2026-11-05T21:22:11.394Z",
+      "reuseCount": 1
+    }
+  ],
   "executionHistory": []
 }
