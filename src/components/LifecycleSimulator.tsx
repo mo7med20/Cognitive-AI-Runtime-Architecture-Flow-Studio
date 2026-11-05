@@ -57,6 +57,8 @@ interface LifecycleSimulatorProps {
   onSelectPlatformAndCompileStage2: (platform: 'web' | 'desktop') => void;
   onAdvanceToStageWithLiveWorker: (nextStage: StageIndex) => void;
   onApplySurgicalRepairWithLiveWorker: () => void;
+  onAutoAdvanceToStage3?: () => void;
+  onAutoRunFullPipelineLive?: (promptToRun?: string) => void;
   onToggleRepair: (repaired: boolean) => void;
   onFocusComponent: (componentId: string) => void;
   onChangeDependencyFilter: (filter: DependencyCategory | 'all') => void;
@@ -91,6 +93,8 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
   onSelectPlatformAndCompileStage2,
   onAdvanceToStageWithLiveWorker,
   onApplySurgicalRepairWithLiveWorker,
+  onAutoAdvanceToStage3,
+  onAutoRunFullPipelineLive,
   onToggleRepair,
   onFocusComponent,
   onChangeDependencyFilter,
@@ -350,23 +354,40 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                 placeholder="e.g., Add a POST /api/v1/payments/:id/refund endpoint with DB transaction & concurrency lock..."
                 className="flex-1 rounded-xl border border-[#384e6e] bg-[#0a0f18] px-4 py-3.5 text-sm text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
               />
-              <button
-                type="submit"
-                disabled={isStageExecuting || !idlePromptInput.trim()}
-                className="px-6 py-3.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
-              >
-                {isStageExecuting ? (
-                  <>
-                    <Loader2 size={17} className="animate-spin" />
-                    <span>Running Stage 1 Role on {coderModel}...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={17} />
-                    <span>Dispatch to Runtime (Start Step 1 Role) →</span>
-                  </>
-                )}
-              </button>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="submit"
+                  disabled={isStageExecuting || !idlePromptInput.trim()}
+                  className="px-5 py-3.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
+                  title="Dispatch prompt to start Stage 1 Intake & Ambiguity Role"
+                >
+                  {isStageExecuting ? (
+                    <>
+                      <Loader2 size={17} className="animate-spin" />
+                      <span>Running Stage 1 Role on {coderModel}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={17} />
+                      <span>Start Step 1 Role →</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  disabled={isStageExecuting || !idlePromptInput.trim()}
+                  onClick={() => {
+                    if (idlePromptInput.trim()) {
+                      onAutoRunFullPipelineLive?.(idlePromptInput.trim());
+                    }
+                  }}
+                  className="px-5 py-3.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
+                  title="Execute all 5 stages end-to-end and jump straight to generated code and verification"
+                >
+                  <Zap size={17} />
+                  <span>Auto-Run All 5 Steps to Code ⚡</span>
+                </button>
+              </div>
             </div>
           </form>
 
@@ -1147,8 +1168,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
              ========================================================= */}
           {currentStage === 0 && (
             <div className="space-y-4">
-              {revealStep >= 1 && (
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   {/* Naive AI Column */}
                   <article className="md:col-span-5 rounded-2xl border border-[#fb8797]/40 bg-[#151c28] p-4 space-y-3">
                     <div className="flex items-center justify-between">
@@ -1185,9 +1205,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                         ✓ WORKER-S1-INTAKE ({coderModel}) Auto-Resolution
                       </span>
                       <span className="px-2 py-0.5 rounded bg-[#53d6ab]/15 text-[#53d6ab] font-mono text-[10px] font-bold">
-                        {revealStep >= 2
-                          ? `${activeScenario.elicitation.autoResolvedFacts.length} Repo Facts Resolved`
-                          : 'Scanning Tier 1–3 Store...'}
+                        {activeScenario.elicitation.autoResolvedFacts.length} Repo Facts Resolved
                       </span>
                     </div>
                     <p className="text-xs text-[#a2afc3]">
@@ -1196,31 +1214,49 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                       <strong>Tier 3 Knowledge</strong>:
                     </p>
                     <div className="space-y-2">
-                      {activeScenario.elicitation.autoResolvedFacts
-                        .slice(0, revealStep >= 2 ? 3 : 1)
-                        .map((fact, fIdx) => (
-                          <div
-                            key={fact.id}
-                            className="rounded-xl bg-[#0e131d] border border-[#26364d] p-3 text-xs"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2 font-mono">
-                              <span className="font-bold text-[#8caef9]">
-                                [Fact #{fIdx + 1}] {fact.dimension}
-                              </span>
-                              <span className="px-2 py-0.5 rounded bg-[#162234] text-[#53d6ab] text-[10px]">
-                                {fact.sourceTier.replaceAll('_', ' ')} · {fact.sourceArtifact}
-                              </span>
-                            </div>
-                            <div className="mt-1 font-bold text-white">{fact.autoResolvedValue}</div>
+                      {activeScenario.elicitation.autoResolvedFacts.map((fact, fIdx) => (
+                        <div
+                          key={fact.id}
+                          className="rounded-xl bg-[#0e131d] border border-[#26364d] p-3 text-xs"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 font-mono">
+                            <span className="font-bold text-[#8caef9]">
+                              [Fact #{fIdx + 1}] {fact.dimension}
+                            </span>
+                            <span className="px-2 py-0.5 rounded bg-[#162234] text-[#53d6ab] text-[10px]">
+                              {fact.sourceTier.replaceAll('_', ' ')} · {fact.sourceArtifact}
+                            </span>
                           </div>
-                        ))}
+                          <div className="mt-1 font-bold text-white">{fact.autoResolvedValue}</div>
+                        </div>
+                      ))}
                     </div>
                   </article>
                 </div>
-              )}
 
-              {/* Single Blocking Architectural Gate Card (Revealed at revealStep >= 3) */}
-              {revealStep >= 3 && (
+                {/* Fast-Track to Step 3 Code Callout */}
+                <div className="rounded-xl border border-[#53d6ab]/45 bg-[#0e1724] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#53d6ab]">
+                      <Zap size={14} className="text-[#ff8a4c]" />
+                      <span>LOOKING FOR THE GENERATED CODE?</span>
+                    </div>
+                    <p className="text-xs text-[#c8d3e2]">
+                      Code synthesis is performed by Worker A & B in <strong>Step 3</strong>. Select an option below or auto-advance directly to the code:
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isStageExecuting}
+                    onClick={() => onAutoAdvanceToStage3?.()}
+                    className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                  >
+                    <Zap size={14} />
+                    <span>Auto-Advance to Step 3 (Inspect Code) ➔</span>
+                  </button>
+                </div>
+
+                {/* Single Blocking Architectural Gate Card */}
                 <article className="rounded-2xl border border-[#ff8a4c]/60 bg-gradient-to-r from-[#ff8a4c]/12 to-[#141c29] p-5 space-y-4">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-2 font-mono text-[10px]">
@@ -1285,23 +1321,57 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   </div>
 
                   {clarifiedPlatform === 'web' ? (
-                    <div className="rounded-xl border border-[#53d6ab]/40 bg-[#0d131d] p-4 font-mono text-xs space-y-2">
+                    <div className="rounded-xl border border-[#53d6ab]/40 bg-[#0d131d] p-4 font-mono text-xs space-y-3">
                       <div className="flex items-center justify-between text-[#53d6ab] font-bold">
                         <span>✓ COMPILED TASKSPEC CONTRACT (READY FOR STAGE 2 ARCHITECT ROLE)</span>
                         <span>AMBIGUITY ENTROPY = 0.00 BITS</span>
                       </div>
-                      <pre className="text-[#dce3ef] overflow-x-auto text-[11px] leading-relaxed">
+                      <pre className="text-[#dce3ef] overflow-x-auto text-[11px] leading-relaxed max-h-[160px]">
                         {JSON.stringify(gate.compiledTaskSpecPreview, null, 2)}
                       </pre>
+                      <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#1e2a3b]">
+                        <span className="text-xs text-[#53d6ab] font-bold">
+                          TaskSpec locked. Proceed to generate Plan or Code:
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={isStageExecuting}
+                            onClick={() => onAdvanceToStageWithLiveWorker(1)}
+                            className="px-3.5 py-1.5 rounded-lg bg-[#223348] hover:bg-[#2c4059] text-white font-mono text-xs font-bold cursor-pointer"
+                          >
+                            <span>Next: Step 2 Plan →</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isStageExecuting}
+                            onClick={() => onAutoAdvanceToStage3?.()}
+                            className="px-4 py-1.5 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-md"
+                          >
+                            <Zap size={13} />
+                            <span>Jump to Step 3 Code ➔</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-[#ff8a4c]/40 bg-[#0d131d] p-3 font-mono text-xs text-[#ffa875]">
-                      Select option <strong>{gate.options[0]?.id}</strong> above to compile the locked{' '}
-                      <code>TaskSpec</code> and unlock the Stage 2 Architect Role.
+                    <div className="rounded-xl border border-[#ff8a4c]/40 bg-[#0d131d] p-3 font-mono text-xs text-[#ffa875] flex flex-wrap items-center justify-between gap-2">
+                      <span>
+                        Select option <strong>{gate.options[0]?.id}</strong> above to compile the locked{' '}
+                        <code>TaskSpec</code>.
+                      </span>
+                      <button
+                        type="button"
+                        disabled={isStageExecuting}
+                        onClick={() => onAutoAdvanceToStage3?.()}
+                        className="px-3 py-1 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1 cursor-pointer"
+                      >
+                        <Zap size={12} />
+                        <span>Auto-Advance to Step 3 Code ➔</span>
+                      </button>
                     </div>
                   )}
                 </article>
-              )}
             </div>
           )}
 
@@ -1427,6 +1497,22 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   </div>
                 </article>
               )}
+
+              {/* Direct Action to Generate Step 3 Code */}
+              <div className="rounded-xl border border-[#ff8a4c]/50 bg-[#121c2c] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                <div className="text-xs text-[#c8d3e2] font-mono">
+                  <strong className="text-[#53d6ab]">Step 2 Ready:</strong> Requirements & ADRs locked. Synthesize Step 3 parallel implementation & test files:
+                </div>
+                <button
+                  type="button"
+                  disabled={isStageExecuting}
+                  onClick={() => onAdvanceToStageWithLiveWorker(2)}
+                  className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
+                >
+                  <Code2 size={15} />
+                  <span>Generate Step 3 Code Now ({coderModel} ∥ {verifierModel}) ➔</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -1451,9 +1537,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-[#c8d3e2]">
-                    {revealStep >= 2
-                      ? `✓ Synthesized ${activeScenario.files[0]?.path} & ${activeScenario.files[1]?.path}`
-                      : `Synthesizing service & schema files inside Sandbox #S3-01...`}
+                    ✓ Synthesized {activeScenario.files[0]?.path} & {activeScenario.files[1]?.path}
                   </p>
                 </article>
 
@@ -1467,38 +1551,34 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-[#c8d3e2]">
-                    {revealStep >= 3
-                      ? `✓ Synthesized independent verification suite (${activeScenario.files[2]?.path})`
-                      : `Generating unbiased R1..R8 test suite directly from Stage 2 TaskSpec...`}
+                    ✓ Synthesized independent verification suite ({activeScenario.files[2]?.path})
                   </p>
                 </article>
               </div>
 
-              {/* Multi-File Code Explorer inside Checkpoint #S3-01 (Reveals files progressively as Role 3A & Role 3B finish) */}
-              {revealStep >= 1 && (
+              {/* Multi-File Code Explorer inside Checkpoint #S3-01 (All files immediately accessible) */}
+              {activeScenario.files && activeScenario.files.length > 0 && (
                 <div className="rounded-2xl border border-[#2b3546] bg-[#151c28] overflow-hidden">
                   <div className="border-b border-[#263244] bg-[#0e131d] px-4 py-3 flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      {activeScenario.files
-                        .slice(0, revealStep >= 3 ? 3 : revealStep >= 2 ? 2 : 1)
-                        .map((file, idx) => (
-                          <button
-                            key={file.path}
-                            type="button"
-                            onClick={() => setSelectedFileIndex(idx)}
-                            className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                              selectedFileIndex === idx
-                                ? 'bg-[#ff8a4c] text-[#0c1018]'
-                                : 'bg-[#162030] text-[#c8d3e2] hover:text-white'
-                            }`}
-                          >
-                            <FileCode2 size={13} />
-                            <span>{file.path}</span>
-                            <span className="text-[10px] opacity-80">
-                              ({file.role === 'VERIFICATION_TEST_SUITE' ? 'Role 3B' : 'Role 3A'})
-                            </span>
-                          </button>
-                        ))}
+                      {activeScenario.files.map((file, idx) => (
+                        <button
+                          key={file.path}
+                          type="button"
+                          onClick={() => setSelectedFileIndex(idx)}
+                          className={`px-3 py-1.5 rounded-lg font-mono text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                            selectedFileIndex === idx
+                              ? 'bg-[#ff8a4c] text-[#0c1018]'
+                              : 'bg-[#162030] text-[#c8d3e2] hover:text-white'
+                          }`}
+                        >
+                          <FileCode2 size={13} />
+                          <span>{file.path}</span>
+                          <span className="text-[10px] opacity-80">
+                            ({file.role === 'VERIFICATION_TEST_SUITE' ? 'Role 3B' : 'Role 3A'})
+                          </span>
+                        </button>
+                      ))}
                     </div>
 
                     <div className="flex items-center gap-1.5 font-mono text-xs">
@@ -1542,6 +1622,20 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   <pre className="p-4 font-mono text-xs text-[#dce3ef] bg-[#0a0f18] overflow-x-auto leading-relaxed max-h-[380px]">
                     {codeViewVersion === 'v1_1' ? activeFile.v1_1Code : activeFile.v1Code}
                   </pre>
+
+                  <div className="border-t border-[#263244] bg-[#0c121c] p-3 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+                    <span className="text-[#a2afc3]">
+                      Viewing <strong className="text-white">{activeFile.path}</strong> ({codeViewVersion === 'v1_1' ? 'v1.1 Patched' : 'v1.0 Candidate'})
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isStageExecuting}
+                      onClick={() => onAdvanceToStageWithLiveWorker(3)}
+                      className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                    >
+                      <span>Proceed to Step 4 (Oracle Audit & AST Patch) →</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1641,9 +1735,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#273448]">
-                          {activeScenario.requirements
-                            .slice(0, revealStep >= 3 ? 8 : revealStep === 2 ? 7 : 4)
-                            .map((req) => {
+                          {activeScenario.requirements.map((req) => {
                               const status = repaired ? req.v1_1Status : req.v1Status;
                               return (
                                 <tr
@@ -1688,10 +1780,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                 </div>
               )}
 
-              {/* Gate Failure Diagnostic OR Verified Surgical AST Diff (Revealed once R8 is audited at revealStep >= 3) */}
-              {revealStep >= 3 && (
-                <>
-                  {!repaired ? (
+              {/* Gate Failure Diagnostic OR Verified Surgical AST Diff */}
+              <>
+                {!repaired ? (
                     <>
                       <article className="rounded-2xl border border-[#fb8797]/50 bg-[#fb8797]/8 p-5 space-y-3">
                         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1793,7 +1884,6 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     </article>
                   )}
                 </>
-              )}
             </div>
           )}
 
@@ -1836,9 +1926,8 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                 </article>
               )}
 
-              {/* Interactive Sandbox Execution Probe (Revealed at revealStep >= 2) */}
-              {revealStep >= 2 && (
-                <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5 space-y-4">
+              {/* Interactive Sandbox Execution Probe */}
+              <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5 space-y-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <div className="font-mono text-xs font-bold text-[#ff8a4c]">
@@ -1993,7 +2082,6 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     </div>
                   )}
                 </article>
-              )}
 
               {revealStep >= 3 && activeScenario.id === 'baseline_calculator' && (
                 <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
