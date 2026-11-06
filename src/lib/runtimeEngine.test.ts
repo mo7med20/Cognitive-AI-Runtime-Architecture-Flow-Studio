@@ -476,4 +476,51 @@ test('single 4B model (qwen3:4b) successfully executes both Worker A (Coder) and
   });
 });
 
+test('dynamicDeliverableEngine synthesizes distinct interactive apps and code artifacts for non-landing-page prompts', async () => {
+  const { detectPromptDomainArchetype, generateDynamicStandaloneHtml } = await import('./dynamicDeliverableEngine');
+  const { synthesizeDynamicScenarioFromPrompt } = await import('./seScenariosAndMetamodel');
+
+  // 1. Todo / Task Manager prompt
+  const todoPrompt = 'Build a priority todo & kanban task manager app with tags and search filter';
+  assert.equal(detectPromptDomainArchetype(todoPrompt), 'TODO_PRODUCTIVITY');
+  const todoScenario = synthesizeDynamicScenarioFromPrompt(todoPrompt, 'qwen3:4b', 'POL-2026-v1', []);
+  assert.ok(!todoScenario.title.toLowerCase().includes('landing page'), 'Todo prompt must not produce a landing page title');
+  assert.ok(todoScenario.files[0].path.includes('PriorityTodoKanbanApp.tsx'), 'Todo scenario must synthesize dynamically named PriorityTodoKanbanApp.tsx');
+  assert.ok(!todoScenario.files[0].path.includes('LandingPageModule'), 'Todo scenario must not synthesize LandingPageModule.tsx');
+  const todoHtml = generateDynamicStandaloneHtml(todoScenario, '#SEAL-TODO', 'sha256:1234', 'qwen3:4b');
+  assert.ok(todoHtml.includes('id="todoForm"') && todoHtml.includes('id="todoList"'), 'Todo HTML must render interactive todoForm and todoList');
+  assert.ok(!todoHtml.includes('id="leadForm"'), 'Todo HTML must not render lead capture landing page');
+
+  // 2. Calculator prompt
+  const calcPrompt = 'اعمل آلة حاسبة تفاعلية للويب';
+  assert.equal(detectPromptDomainArchetype(calcPrompt), 'CALCULATOR');
+  const calcScenario = synthesizeDynamicScenarioFromPrompt(calcPrompt, 'qwen3:4b', 'POL-2026-v1', []);
+  const calcHtml = generateDynamicStandaloneHtml(calcScenario, '#SEAL-CALC', 'sha256:5678', 'qwen3:4b');
+  assert.ok(calcHtml.includes('id="calcDisplay"') && calcHtml.includes('pressKey('), 'Calculator HTML must render interactive display and keypad');
+  assert.ok(!calcHtml.includes('id="leadForm"'), 'Calculator HTML must not render landing page');
+
+  // 3. E-Commerce Storefront prompt
+  const shopPrompt = 'Create an e-commerce product storefront with shopping cart and stock check';
+  assert.equal(detectPromptDomainArchetype(shopPrompt), 'ECOMMERCE_STORE');
+  const shopScenario = synthesizeDynamicScenarioFromPrompt(shopPrompt, 'qwen3:4b', 'POL-2026-v1', []);
+  const shopHtml = generateDynamicStandaloneHtml(shopScenario, '#SEAL-SHOP', 'sha256:9abc', 'qwen3:4b');
+  assert.ok(shopHtml.includes('id="productGrid"') && shopHtml.includes('checkoutCart()'), 'E-Commerce HTML must render product catalog and cart');
+
+  // 4. Analytics Dashboard prompt
+  const dashPrompt = 'Build a real-time telemetry and KPI analytics dashboard with latency charts';
+  assert.equal(detectPromptDomainArchetype(dashPrompt), 'ANALYTICS_DASHBOARD');
+  const dashScenario = synthesizeDynamicScenarioFromPrompt(dashPrompt, 'qwen3:4b', 'POL-2026-v1', []);
+  const dashHtml = generateDynamicStandaloneHtml(dashScenario, '#SEAL-DASH', 'sha256:def0', 'qwen3:4b');
+  assert.ok(dashHtml.includes('id="kpiCount"') && dashHtml.includes('id="chartBars"'), 'Dashboard HTML must render KPI cards and chart bars');
+
+  // 5. Custom interactive app prompt (e.g., Recipe & Calorie Tracker)
+  const customPrompt = 'Create a meal prep and macro nutrition tracker for athletes';
+  assert.equal(detectPromptDomainArchetype(customPrompt), 'CUSTOM_INTERACTIVE_APP');
+  const customScenario = synthesizeDynamicScenarioFromPrompt(customPrompt, 'qwen3:4b', 'POL-2026-v1', []);
+  const customHtml = generateDynamicStandaloneHtml(customScenario, '#SEAL-CUST', 'sha256:1122', 'qwen3:4b');
+  assert.ok(customHtml.includes('id="customAppForm"') && customHtml.includes('id="cList"'), 'Custom app HTML must render interactive workbench');
+  assert.ok(!customHtml.includes('id="leadForm"'), 'Custom app HTML must not render landing page');
+});
+
+
 

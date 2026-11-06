@@ -1671,6 +1671,24 @@ export const QUICK_PROMPT_SUGGESTIONS: Array<{
   prompt: string;
 }> = [
   {
+    id: 'todo_task_manager',
+    label: 'Todo & Priority Task Manager',
+    arabicLabel: 'تطبيق إدارة المهام والأولويات التفاعلي',
+    prompt: 'Build a priority todo & kanban task manager app with tags, search filter, and duplicate-submit mutex'
+  },
+  {
+    id: 'ecommerce_storefront',
+    label: 'E-Commerce Storefront & Cart',
+    arabicLabel: 'متجر إلكتروني مع سلة تسوق وحساب الضريبة',
+    prompt: 'Create an e-commerce product storefront with category filters, shopping cart drawer, and atomic stock checkout'
+  },
+  {
+    id: 'analytics_dashboard',
+    label: 'Real-Time Analytics Dashboard',
+    arabicLabel: 'لوحة تحكم ومؤشرات أداء فورية (KPIs)',
+    prompt: 'Build a real-time SaaS analytics & KPI telemetry dashboard with latency charts, alert thresholds, and JSON export'
+  },
+  {
     id: 'feat_refund_api',
     label: 'Payment Refund API + DB Lock',
     arabicLabel: 'واجهة استرجاع المدفوعات مع قفل التزامن',
@@ -1689,16 +1707,16 @@ export const QUICK_PROMPT_SUGGESTIONS: Array<{
     prompt: SE_CODING_SCENARIOS.refactor_sql_repo.rawPrompt
   },
   {
+    id: 'baseline_calculator',
+    label: '«اعمل آلة حاسبة» (Calculator)',
+    arabicLabel: 'بناء آلة حاسبة تفاعلية مع حماية القسمة على صفر',
+    prompt: SE_CODING_SCENARIOS.baseline_calculator.rawPrompt
+  },
+  {
     id: 'landing_page',
     label: 'Landing Page + Lead Capture',
     arabicLabel: 'صفحة هبوط مع نموذج التقاط العملاء والأمان',
     prompt: 'i need landing-page for my site with responsive hero, feature bento grid, and lead capture form with anti-spam debounce'
-  },
-  {
-    id: 'baseline_calculator',
-    label: '«اعمل آلة حاسبة» (Baseline)',
-    arabicLabel: 'المثال التوضيحي المبسط (آلة حاسبة)',
-    prompt: SE_CODING_SCENARIOS.baseline_calculator.rawPrompt
   }
 ];
 

@@ -102,7 +102,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
   onChangeDependencyFilter,
   onOpenKnowledgeTab
 }) => {
-  const [idlePromptInput, setIdlePromptInput] = useState<string>('i need landing-page for my site');
+  const [idlePromptInput, setIdlePromptInput] = useState<string>(
+    'Build a priority todo & kanban task manager app with tags, search filter, and duplicate-submit mutex'
+  );
   const [openWhyIds, setOpenWhyIds] = useState<Record<string, boolean>>({
     'ADR-101': true,
     'ADR-LIVE-MODEL': true
@@ -747,7 +749,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
             )}
             {currentStage === 4 && (
               <>
-                <strong className="text-[#53d6ab]">✓ Step 5 Complete &amp; Sealed ({sealId}):</strong> All 5 sequential runtime stages verified. Open your <strong>Interactive Landing Page Preview &amp; Download Center (HTML / ZIP)</strong>.
+                <strong className="text-[#53d6ab]">✓ Step 5 Complete &amp; Sealed ({sealId}):</strong> All 5 sequential runtime stages verified. Open your <strong>Interactive Deliverable Preview &amp; Download Center ({activeScenario.title})</strong>.
               </>
             )}
           </p>

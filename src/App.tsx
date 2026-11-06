@@ -78,11 +78,18 @@ export default function App() {
   const [dependencyFilter, setDependencyFilter] = useState<DependencyCategory | 'all'>('all');
   const [isSlidesOpen, setIsSlidesOpen] = useState<boolean>(false);
 
-  // Active SE Scenario & Prompt State (Initialized to Landing Page deliverable so Result tab is always ready)
+  // Active SE Scenario & Prompt State
   const [activeScenario, setActiveScenario] = useState<SECodingScenario>(() =>
-    synthesizeDynamicScenarioFromPrompt('i need landing-page for my site', 'qwen3:4b', 'POL-2026-v1', [])
+    synthesizeDynamicScenarioFromPrompt(
+      'Build a priority todo & kanban task manager app with tags, search filter, and duplicate-submit mutex',
+      'qwen3:4b',
+      'POL-2026-v1',
+      []
+    )
   );
-  const [customPromptInput, setCustomPromptInput] = useState<string>('i need landing-page for my site');
+  const [customPromptInput, setCustomPromptInput] = useState<string>(
+    'Build a priority todo & kanban task manager app with tags, search filter, and duplicate-submit mutex'
+  );
 
   // Parallel Local LLM Runtime Config (Worker A = Coder Model, Worker B = Verifier/Critic Model)
   const [llmConfig, setLlmConfig] = useState<LocalModelRuntimeConfig>({

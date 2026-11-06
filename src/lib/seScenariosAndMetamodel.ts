@@ -1,3 +1,8 @@
+import {
+  detectPromptDomainArchetype,
+  synthesizeDomainSpecificScenario
+} from './dynamicDeliverableEngine';
+
 export type SETaskArchetype =
   | 'FEATURE_ENGINEERING'
   | 'BUG_INVESTIGATION_AND_FIX'
@@ -155,6 +160,7 @@ export interface SECodingScenario {
       v1_1Passed: boolean;
     }[];
   };
+  customStandaloneHtml?: string;
 }
 
 export interface MetamodelClassContract {
@@ -2113,10 +2119,10 @@ export function synthesizeDynamicScenarioFromPrompt(
   existingKnowledgeUnits: ExtractedKnowledgeUnit[]
 ): SECodingScenario {
   const cleanPrompt = customPrompt.trim();
-  const lower = cleanPrompt.toLowerCase();
+  const kind = detectPromptDomainArchetype(cleanPrompt);
 
-  // Check if prompt matches or relates to existing domains, or synthesize a custom full-stack SE task
-  if (lower.includes('refund') || lower.includes('payment') || lower.includes('stripe') || lower.includes('استرجاع') || lower.includes('دفع')) {
+  // Route preset software engineering scenarios when their exact domain archetype is matched
+  if (kind === 'PAYMENT_API') {
     const base = SE_CODING_SCENARIOS.feat_refund_api;
     return {
       ...base,
@@ -2124,7 +2130,7 @@ export function synthesizeDynamicScenarioFromPrompt(
       title: `Live Local Model Run (${modelUsed}): ${base.title}`
     };
   }
-  if (lower.includes('auth') || lower.includes('jwt') || lower.includes('token') || lower.includes('session') || lower.includes('توثيق') || lower.includes('توكن')) {
+  if (kind === 'AUTH_SECURITY') {
     const base = SE_CODING_SCENARIOS.bugfix_auth_race;
     return {
       ...base,
@@ -2132,7 +2138,7 @@ export function synthesizeDynamicScenarioFromPrompt(
       title: `Live Local Model Run (${modelUsed}): ${base.title}`
     };
   }
-  if (lower.includes('sql') || lower.includes('query') || lower.includes('n+1') || lower.includes('search') || lower.includes('استعلام') || lower.includes('قاعدة')) {
+  if (kind === 'SQL_REPO') {
     const base = SE_CODING_SCENARIOS.refactor_sql_repo;
     return {
       ...base,
@@ -2140,7 +2146,7 @@ export function synthesizeDynamicScenarioFromPrompt(
       title: `Live Local Model Run (${modelUsed}): ${base.title}`
     };
   }
-  if (lower.includes('calc') || lower.includes('حاسب') || lower.includes('آلة')) {
+  if (kind === 'CALCULATOR') {
     const base = SE_CODING_SCENARIOS.baseline_calculator;
     return {
       ...base,
@@ -2149,17 +2155,8 @@ export function synthesizeDynamicScenarioFromPrompt(
     };
   }
 
-  // First-Class Landing Page / Web UI / Frontend Synthesizer
-  if (
-    lower.includes('landing') ||
-    lower.includes('page') ||
-    lower.includes('site') ||
-    lower.includes('website') ||
-    lower.includes('frontend') ||
-    lower.includes('ui') ||
-    lower.includes('صفحة') ||
-    lower.includes('موقع')
-  ) {
+  // First-Class Landing Page Synthesizer (ONLY when the prompt is specifically for a landing/marketing/portfolio page)
+  if (kind === 'LANDING_PAGE') {
     return {
       id: `landing_page_${Date.now()}`,
       code: 'SE-TASK-WEB-LANDING',
@@ -2510,445 +2507,11 @@ export function synthesizeDynamicScenarioFromPrompt(
     };
   }
 
-  // Synthesize a tailored Software Engineering service module for any custom prompt!
-  const slug = cleanPrompt
-    .replace(/[^a-zA-Z0-9\s]/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 3)
-    .join('_')
-    .toLowerCase() || 'custom_module';
-
-  const pascalName = slug
-    .split('_')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join('') || 'CustomDomain';
-
-  const matchedKU = existingKnowledgeUnits[0] || SE_CODING_SCENARIOS.feat_refund_api.extractedKnowledge;
-
-  return {
-    id: `custom_${Date.now()}`,
-    code: 'SE-LIVE-CUSTOM',
-    title: `Live Prompt Execution: ${ pascalName }Service (${ modelUsed })`,
-    arabicTitle: `تنفيذ مباشر عبر النموذج المحلي (${ modelUsed }): ${ cleanPrompt.slice(0, 55) }`,
-    archetype: 'CUSTOM_LIVE_PROMPT',
-    badgeLabel: `Live Local LLM (${ modelUsed })`,
-    rawPrompt: cleanPrompt,
-    arabicPrompt: cleanPrompt,
-    repositoryName: `shiftcore-workspace (${ pascalName } Module + TypeScript + PostgreSQL)`,
-    techStack: ['TypeScript', 'Node.js', 'PostgreSQL', 'Vitest', modelUsed],
-    elicitation: {
-      naiveChatbotTranscript: [
-        `Naive AI Q1: What tech stack, framework, and database should I use for "${cleanPrompt.slice(0, 40)}..."?`,
-        `Naive AI Q2: What validation rules or error formats do you want?`,
-        `Naive AI Result: Generates unverified single-file code with no concurrency lock, no input validation, and no automated test suite.`
-      ],
-      autoResolvedFacts: [
-        {
-          id: 'FACT-LIVE-01',
-          dimension: 'Repository Architecture & Types',
-          naiveAiQuestion: 'What language and project structure are you using?',
-          autoResolvedValue: `TypeScript strict service architecture in src/services/${slug}Service.ts`,
-          sourceTier: 'TIER_1_REPO_AST',
-          sourceArtifact: 'tsconfig.json & src/services/*'
-        },
-        {
-          id: 'FACT-LIVE-02',
-          dimension: 'Organizational Security & Audit Policy',
-          naiveAiQuestion: 'What security and rate/idempotency rules apply?',
-          autoResolvedValue: `Active policy ${activePolicyHash}: Mandatory input sanitization, transactional atomicity, and audit trace`,
-          sourceTier: 'TIER_2_POLICY_ENGINE',
-          sourceArtifact: `${activePolicyHash} §3.1`
-        },
-        {
-          id: 'FACT-LIVE-03',
-          dimension: 'Reused Verified Pattern from Tier 3 Knowledge Graph',
-          naiveAiQuestion: 'How should state mutations and concurrency be structured?',
-          autoResolvedValue: `Auto-matched verified unit ${matchedKU.id} (${matchedKU.patternName})`,
-          sourceTier: 'TIER_3_KNOWLEDGE_GRAPH',
-          sourceArtifact: `${matchedKU.id} (Seal ${matchedKU.sourceSealId})`
-        }
-      ],
-      blockingGate: {
-        gateId: 'GATE-LIVE-CUSTOM',
-        question: `Unresolved Architectural Trade-off for "${cleanPrompt.slice(0, 60)}": How should concurrent state mutations and failure rollback be enforced?`,
-        arabicHint: 'قام ShiftCore بقراءة بنية المشروع وسياسة الأمان والخبرات السابقة تلقائياً، وأوقف التنفيذ فقط لتأكيد عقد التزامن ومعالجة الأخطاء:',
-        whyUnresolvableFromRepo: 'Custom domain mutation requires explicit selection between strict serializable locking vs. optimistic retry semantics.',
-        options: [
-          {
-            id: 'STRICT_TRANSACTIONAL_LOCK',
-            label: 'Strict Transactional Guard + Idempotent Replay Key + Deterministic Error Contract (Recommended)',
-            arabicLabel: 'حماية المعاملات الذرية (Transactional Lock) مع مفتاح منع التكرار (Idempotency) وعقد أخطاء صارم',
-            compiledConstraint: 'executionMode="SERIALIZABLE_GUARD"; requireIdempotencyKey=true; failClosedOnInvalidInput=true',
-            recommended: true
-          },
-          {
-            id: 'OPTIMISTIC_ASYNC_QUEUE',
-            label: 'Optimistic Version Check + Dead-Letter Queue Fallback',
-            arabicLabel: 'تحقق متفائل من الإصدار مع طابور معالجة خلفية',
-            compiledConstraint: 'executionMode="OPTIMISTIC_VERSION"; requireIdempotencyKey=true; failClosedOnInvalidInput=true'
-          }
-        ],
-        compiledTaskSpecPreview: {
-          taskCode: 'SE-LIVE-CUSTOM',
-          rawPrompt: cleanPrompt,
-          localModelRuntime: modelUsed,
-          autoResolvedFromRepo: ['TypeScript Service Layer', `Policy ${activePolicyHash}`, `Reused ${matchedKU.id}`],
-          lockedUserConstraint: 'executionMode=SERIALIZABLE_GUARD; requireIdempotencyKey=true',
-          ambiguityEntropy: '0.00 bits (LOCKED)'
-        }
-      }
-    },
-    decisions: [
-      {
-        id: 'ADR-LIVE-01',
-        stage: 'Stage 1 (Intake Gate)',
-        title: `Context-Grounded Specification for ${pascalName}Service`,
-        chosenOption: 'Compile prompt + Tier 1–3 context into strict TypeScript DTO & transactional service contract',
-        rejectedAlternative: 'Unconstrained free-text LLM generation',
-        rationale: `Prevents hallucinated dependencies and enforces ${activePolicyHash} compliance from the first line of code.`,
-        constraintLocked: 'All inputs validated via schema guard; mutations wrapped in atomic lock.'
-      },
-      {
-        id: 'ADR-LIVE-02',
-        stage: 'Stage 4 (Verification & Repair)',
-        title: 'Surgical Concurrency & Boundary Remediation',
-        chosenOption: `Patch ${slug}Service.ts AST node to enforce atomic mutex/lock and idempotency replay guard`,
-        rejectedAlternative: 'Full file regeneration',
-        rationale: 'Preserves verified business logic in Checkpoint #S3-01 while surgically eliminating the concurrent race window.',
-        constraintLocked: 'Retain #S3-01; apply minimal AST patch v1.0 -> v1.1.'
-      }
-    ],
-    files: [
-      {
-        path: `src/services/${slug}Service.ts`,
-        language: 'typescript',
-        role: 'CONTROLLER_OR_SERVICE',
-        linesOfCode: 52,
-        defectHighlightLine: 26,
-        defectExplanation: `v1.0 generated by ${modelUsed} validates basic fields but executes the state mutation without acquiring the atomic key lock, allowing duplicate concurrent executions under race conditions.`,
-        v1Code: `// Generated by ShiftCore Local Runtime (${modelUsed})
-// Task Prompt: ${cleanPrompt}
-
-export interface ${pascalName}Payload {
-  requestId: string;
-  actorId: string;
-  operationValue: number;
-  metadata?: Record<string, unknown>;
-}
-
-export class ${pascalName}Service {
-  private readonly committedRecords = new Map<string, { value: number; timestamp: number }>();
-
-  async executeOperation(payload: ${pascalName}Payload) {
-    if (!payload.requestId || payload.requestId.trim().length < 4) {
-      throw new Error('ERR_MISSING_REQUEST_ID');
-    }
-    if (!payload.actorId) {
-      throw new Error('ERR_UNAUTHORIZED_ACTOR');
-    }
-    if (!Number.isFinite(payload.operationValue) || payload.operationValue < 0) {
-      throw new Error('ERR_INVALID_OPERATION_VALUE');
-    }
-
-    // [DEFECT IN v1.0]: Missing atomic in-flight lock & idempotent replay guard!
-    await new Promise(resolve => setTimeout(resolve, 5));
-    const record = { value: payload.operationValue, timestamp: Date.now() };
-    this.committedRecords.set(payload.requestId, record);
-
-    return {
-      status: 'EXECUTED',
-      module: '${pascalName}Service',
-      requestId: payload.requestId,
-      resultValue: record.value
-    };
-  }
-}`,
-        v1_1Code: `// Generated & Surgically Repaired by ShiftCore Local Runtime (${modelUsed})
-// Task Prompt: ${cleanPrompt}
-
-export interface ${pascalName}Payload {
-  requestId: string;
-  actorId: string;
-  operationValue: number;
-  metadata?: Record<string, unknown>;
-}
-
-export class ${pascalName}Service {
-  private readonly committedRecords = new Map<string, { value: number; timestamp: number }>();
-  private readonly inFlightLocks = new Set<string>();
-
-  async executeOperation(payload: ${pascalName}Payload) {
-    if (!payload.requestId || payload.requestId.trim().length < 4) {
-      throw new Error('ERR_MISSING_REQUEST_ID');
-    }
-    if (!payload.actorId) {
-      throw new Error('ERR_UNAUTHORIZED_ACTOR');
-    }
-    if (!Number.isFinite(payload.operationValue) || payload.operationValue < 0) {
-      throw new Error('ERR_INVALID_OPERATION_VALUE');
-    }
-
-    // [REPAIRED IN v1.1]: Idempotent replay check + Atomic in-flight concurrency lock
-    const existing = this.committedRecords.get(payload.requestId);
-    if (existing) {
-      return { status: 'IDEMPOTENT_REPLAY', module: '${pascalName}Service', requestId: payload.requestId, resultValue: existing.value };
-    }
-    if (this.inFlightLocks.has(payload.requestId)) {
-      throw new Error('ERR_CONCURRENT_MUTATION_CONFLICT');
-    }
-
-    this.inFlightLocks.add(payload.requestId);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 5));
-      const record = { value: payload.operationValue, timestamp: Date.now() };
-      this.committedRecords.set(payload.requestId, record);
-      return {
-        status: 'EXECUTED',
-        module: '${pascalName}Service',
-        requestId: payload.requestId,
-        resultValue: record.value
-      };
-    } finally {
-      this.inFlightLocks.delete(payload.requestId);
-    }
-  }
-}`
-      },
-      {
-        path: `prisma/schema.prisma`,
-        language: 'prisma',
-        role: 'SCHEMA_OR_MODEL',
-        linesOfCode: 24,
-        v1Code: `// Synthesized by ShiftCore Worker A (${modelUsed})
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model ${pascalName}Record {
-  id             String   @id @default(uuid())
-  requestId      String   @unique
-  actorId        String
-  operationValue Decimal  @db.Decimal(12, 2)
-  status         String   @default("EXECUTED")
-  policyHash     String   @default("${activePolicyHash}")
-  createdAt      DateTime @default(now())
-
-  @@index([actorId, createdAt])
-}`,
-        v1_1Code: `// Synthesized by ShiftCore Worker A (${modelUsed}) — Untouched during Stage 4 Surgical Repair
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-model ${pascalName}Record {
-  id             String   @id @default(uuid())
-  requestId      String   @unique
-  actorId        String
-  operationValue Decimal  @db.Decimal(12, 2)
-  status         String   @default("EXECUTED")
-  policyHash     String   @default("${activePolicyHash}")
-  createdAt      DateTime @default(now())
-
-  @@index([actorId, createdAt])
-}`
-      },
-      {
-        path: `tests/${slug}Service.spec.ts`,
-        language: 'typescript',
-        role: 'VERIFICATION_TEST_SUITE',
-        linesOfCode: 32,
-        v1Code: `import { describe, it, expect } from 'vitest';
-import { ${pascalName}Service } from '../src/services/${slug}Service';
-
-describe('${pascalName}Service Independent Verification Suite', () => {
-  it('R1-R7: executes valid domain operation and enforces input guards', async () => {
-    const svc = new ${pascalName}Service();
-    const res = await svc.executeOperation({ requestId: 'req_1001', actorId: 'usr_admin', operationValue: 250 });
-    expect(res.status).toBe('EXECUTED');
-  });
-
-  it('R8 [CONCURRENCY & IDEMPOTENCY INVARIANT]: prevents parallel duplicate mutation race', async () => {
-    const svc = new ${pascalName}Service();
-    const race = await Promise.allSettled([
-      svc.executeOperation({ requestId: 'req_race_1', actorId: 'usr_1', operationValue: 500 }),
-      svc.executeOperation({ requestId: 'req_race_1', actorId: 'usr_1', operationValue: 500 })
-    ]);
-    const fulfilled = race.filter(r => r.status === 'fulfilled');
-    const rejected = race.filter(r => r.status === 'rejected');
-    expect(fulfilled.length).toBe(1);
-    expect(rejected.length).toBe(1);
-  });
-});`,
-        v1_1Code: `import { describe, it, expect } from 'vitest';
-import { ${pascalName}Service } from '../src/services/${slug}Service';
-
-describe('${pascalName}Service Independent Verification Suite', () => {
-  it('R1-R7: executes valid domain operation and enforces input guards', async () => {
-    const svc = new ${pascalName}Service();
-    const res = await svc.executeOperation({ requestId: 'req_1001', actorId: 'usr_admin', operationValue: 250 });
-    expect(res.status).toBe('EXECUTED');
-  });
-
-  it('R8 [CONCURRENCY & IDEMPOTENCY INVARIANT]: prevents parallel duplicate mutation race', async () => {
-    const svc = new ${pascalName}Service();
-    const race = await Promise.allSettled([
-      svc.executeOperation({ requestId: 'req_race_1', actorId: 'usr_1', operationValue: 500 }),
-      svc.executeOperation({ requestId: 'req_race_1', actorId: 'usr_1', operationValue: 500 })
-    ]);
-    const fulfilled = race.filter(r => r.status === 'fulfilled');
-    const rejected = race.filter(r => r.status === 'rejected');
-    expect(fulfilled.length).toBe(1);
-    expect(rejected.length).toBe(1);
-  });
-});`
-      }
-    ],
-    surgicalDiff: {
-      targetFile: `src/services/${slug}Service.ts`,
-      rootCauseAnalysis: `Independent Concurrency Probe (R8) executed two parallel calls with \`requestId="req_race_1"\`. In v1.0, both calls bypassed deduplication during the async I/O window. Surgical AST Patch v1.1 adds \`inFlightLocks\` mutex and idempotent replay check.`,
-      beforeSnippet: `- await new Promise(resolve => setTimeout(resolve, 5));
-- this.committedRecords.set(payload.requestId, record);`,
-      afterSnippet: `+ if (this.committedRecords.has(payload.requestId)) return { status: 'IDEMPOTENT_REPLAY', ... };
-+ if (this.inFlightLocks.has(payload.requestId)) throw new Error('ERR_CONCURRENT_MUTATION_CONFLICT');
-+ this.inFlightLocks.add(payload.requestId);`,
-      astNodesModified: 1,
-      untouchedFilesCount: 2
-    },
-    requirements: [
-      { id: 'R1', source: 'USER_SPEC', category: 'Functional', statement: `Implement ${pascalName}Service.executeOperation fulfilling prompt: "${cleanPrompt.slice(0, 60)}"`, plannedModule: `${pascalName}Service`, targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'expect(res.status).toBe("EXECUTED")' },
-      { id: 'R2', source: 'USER_SPEC', category: 'Data Integrity', statement: 'Validate mandatory `requestId` minimum length before execution.', plannedModule: 'RequestIdGuard', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'expect(emptyId).rejects.toThrow("ERR_MISSING_REQUEST_ID")' },
-      { id: 'R3', source: 'USER_SPEC', category: 'Security', statement: 'Enforce authenticated `actorId` presence on every invocation.', plannedModule: 'ActorAuthGuard', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'expect(noActor).rejects.toThrow("ERR_UNAUTHORIZED_ACTOR")' },
-      { id: 'R4', source: 'USER_SPEC', category: 'Data Integrity', statement: 'Reject negative or non-finite numeric payloads (`NaN`, `Infinity`).', plannedModule: 'NumericValidator', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'expect(negVal).rejects.toThrow("ERR_INVALID_OPERATION_VALUE")' },
-      { id: 'R5', source: 'USER_SPEC', category: 'Functional', statement: 'Persist committed operation record keyed by `requestId`.', plannedModule: 'StateStore', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'expect(res.resultValue).toBe(250)' },
-      { id: 'R6', source: 'USER_SPEC', category: 'Resilience', statement: 'Return deterministic response envelope with module provenance.', plannedModule: 'ResponseSerializer', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: `expect(res.module).toBe("${pascalName}Service")` },
-      { id: 'R7', source: 'USER_SPEC', category: 'Security', statement: `Comply with active policy ${activePolicyHash} static AST rules (no eval/untyped any).`, plannedModule: 'ASTStaticScanner', targetFile: `src/services/${slug}Service.ts`, v1Status: 'PASS', v1_1Status: 'PASS', verificationAssertion: 'AST Taint Scan === 0 violations' },
-      {
-        id: 'R8',
-        source: 'POLICY_OR_RUNTIME_QUALITY',
-        category: 'Concurrency',
-        statement: `[Runtime Policy ${activePolicyHash}] Block concurrent duplicate mutation race conditions and return IDEMPOTENT_REPLAY on sequential retries.`,
-        plannedModule: 'InFlightMutexLock',
-        targetFile: `src/services/${slug}Service.ts`,
-        v1Status: 'FAIL',
-        v1_1Status: 'PASS',
-        failureDiagnostic: `CONCURRENT_MUTATION_RACE: Two simultaneous calls with requestId="req_race_1" both executed side effects in v1.0 because no in-flight lock was held across the async boundary.`,
-        verificationAssertion: 'Promise.allSettled([exec("req_1"), exec("req_1")]) -> 1 EXECUTED, 1 ERR_CONCURRENT_MUTATION_CONFLICT'
-      }
-    ],
-    stageFlows: [
-      {
-        stageNumber: 1,
-        stageTitle: 'Stage 1: Live Prompt Context Binding',
-        summary: `Binds live prompt "${cleanPrompt.slice(0, 45)}..." against Tier 1 Repo AST, Tier 2 Policy (${activePolicyHash}), and Tier 3 Knowledge.`,
-        steps: [
-          { stepOrder: 1, fromModule: 'Task Intake Gate', toModule: 'Tier 1-3 Knowledge Engine', action: `Auto-resolve repo & policy context for ${pascalName}Service`, artifactOrHash: '3 Facts Resolved', latencyMs: 19, status: 'OK' },
-          { stepOrder: 2, fromModule: 'Task Intake Gate', toModule: 'Ambiguity Gate', action: 'Confirm transactional locking & idempotency contract', artifactOrHash: 'GATE-LIVE-CUSTOM', latencyMs: 6, status: 'GATE' }
-        ]
-      },
-      {
-        stageNumber: 2,
-        stageTitle: 'Stage 2: Local Model Plan Synthesis',
-        summary: `Dispatches locked TaskSpec to ${modelUsed} to construct R1..R8 test matrix and ADRs.`,
-        steps: [
-          { stepOrder: 1, fromModule: 'Local LLM Planner', toModule: 'Verification Matrix', action: `Synthesize 8 requirements & Vitest assertions via ${modelUsed}`, artifactOrHash: 'Plan #P2-LIVE', latencyMs: 155, status: 'OK' }
-        ]
-      },
-      {
-        stageNumber: 3,
-        stageTitle: 'Stage 3: Sandboxed Code Generation',
-        summary: `Generates ${slug}Service.ts and ${slug}Service.spec.ts inside isolated sandbox Checkpoint #S3-01.`,
-        steps: [
-          { stepOrder: 1, fromModule: 'Isolated Sandbox', toModule: 'Checkpoint Store', action: `Write multi-file TypeScript artifacts via ${modelUsed}`, artifactOrHash: '#S3-01 (v1.0)', latencyMs: 390, status: 'OK' }
-        ]
-      },
-      {
-        stageNumber: 4,
-        stageTitle: 'Stage 4: Independent AST/Race Verification & Surgical Patch',
-        summary: `Catches R8 concurrent mutation race in v1.0 and applies surgical in-flight lock patch (v1.1).`,
-        steps: [
-          { stepOrder: 1, fromModule: 'Independent Verifier Oracle', toModule: 'Surgical AST Patcher', action: `Flag R8 async race condition in ${slug}Service.ts Line 26`, artifactOrHash: '7 PASS / 1 FAIL', latencyMs: 120, status: 'DEFECT' },
-          { stepOrder: 2, fromModule: 'Surgical AST Patcher', toModule: 'Independent Verifier Oracle', action: 'Inject inFlightLocks + idempotent replay guard (v1.1)', artifactOrHash: '8/8 PASS (100%)', latencyMs: 145, status: 'OK' }
-        ]
-      },
-      {
-        stageNumber: 5,
-        stageTitle: 'Stage 5: Cryptographic Seal & Knowledge Promotion',
-        summary: `Issues #SEAL-LIVE and commits verified pattern for ${pascalName}Service into persistent Tier 3 store.`,
-        steps: [
-          { stepOrder: 1, fromModule: 'Cryptographic Signer', toModule: 'Tier 3 Knowledge Graph', action: `Commit new KnowledgeUnit from live prompt run (${modelUsed})`, artifactOrHash: '#SEAL-LIVE', latencyMs: 18, status: 'SEALED' }
-        ]
-      }
-    ],
-    extractedKnowledge: {
-      id: `KU-LIVE-${Date.now().toString().slice(-3)}`,
-      patternName: `${pascalName} Atomic In-Flight Mutex & Idempotent Replay Pattern`,
-      domainTags: [slug, 'live-model', 'concurrency', 'idempotency', 'typescript'],
-      applicabilityTrigger: `Any service mutation similar to "${cleanPrompt.slice(0, 60)}" requiring deduplication across async I/O boundaries.`,
-      reusableAstTemplate: 'if (committed.has(id)) return REPLAY; if (locks.has(id)) throw CONFLICT; locks.add(id); try { ... } finally { locks.delete(id); }',
-      verificationAssertions: [
-        'Parallel duplicate requestIds must reject concurrent sibling with ERR_CONCURRENT_MUTATION_CONFLICT',
-        'Sequential duplicate requestId must return IDEMPOTENT_REPLAY'
-      ],
-      sourceCheckpointId: '#S3-01-v1.1',
-      sourceSealId: '#SEAL-402',
-      policyHash: activePolicyHash,
-      createdAt: new Date().toISOString(),
-      reuseCount: 1
-    },
-    followUpReuse: {
-      nextTaskId: 'SE-LIVE-NEXT',
-      nextTaskPrompt: `Extend ${pascalName}Service with batch processing and webhook notifications.`,
-      arabicPromptSummary: `المهمة التالية (Task N+1): توسيع خدمة ${pascalName}Service بمعالجة الدفعات والإشعارات`,
-      withoutKnowledgeGraph: {
-        questionsAsked: 3,
-        planningLatencyMs: 1380,
-        firstPassDefects: 1,
-        summary: 'Without Knowledge Graph: Model asks repetitive questions and omits the in-flight concurrency mutex.'
-      },
-      withShiftCoreKnowledgeReuse: {
-        questionsAsked: 0,
-        injectedKnowledgeId: matchedKU.id,
-        autoAppliedConstraint: `Auto-injected verified concurrency mutex & idempotency template from ${pascalName}Service knowledge unit.`,
-        planningLatencyMs: 275,
-        firstPassDefects: 0,
-        summary: 'With ShiftCore Tier 3 Reuse: Automatically applies the newly learned pattern from your live prompt run, passing 8/8 checks on the first pass!'
-      }
-    },
-    interactiveSandboxPreview: {
-      type: 'API_TEST_RUNNER',
-      endpointOrTarget: `${pascalName}Service.executeOperation(payload) [Synthesized via ${modelUsed}]`,
-      testCases: [
-        {
-          id: 'TC-LIVE-1',
-          name: 'Valid Domain Execution',
-          inputPayload: '{ "requestId": "req_1001", "actorId": "usr_admin", "operationValue": 250 }',
-          v1Output: '200 OK -> EXECUTED (resultValue: 250)',
-          v1Passed: true,
-          v1_1Output: '200 OK -> EXECUTED (resultValue: 250)',
-          v1_1Passed: true
-        },
-        {
-          id: 'TC-LIVE-2',
-          name: 'Sequential Idempotent Retry (`requestId: "req_1001"`)',
-          inputPayload: '{ "requestId": "req_1001", "actorId": "usr_admin", "operationValue": 250 }',
-          v1Output: 'OVERWRITTEN (Re-executed side effect)',
-          v1Passed: true,
-          v1_1Output: '200 OK -> IDEMPOTENT_REPLAY (Zero duplicate side-effects)',
-          v1_1Passed: true
-        },
-        {
-          id: 'TC-LIVE-3',
-          name: 'Parallel Duplicate Mutation Race Probe (`2x req_race_1`)',
-          inputPayload: 'Promise.all([executeOperation("req_race_1"), executeOperation("req_race_1")])',
-          v1Output: 'FAIL: Both concurrent calls executed side-effects simultaneously!',
-          v1Passed: false,
-          v1_1Output: 'PASS: Call 1 EXECUTED, Call 2 Blocked (ERR_CONCURRENT_MUTATION_CONFLICT)',
-          v1_1Passed: true
-        }
-      ]
-    }
-  };
+  // Synthesize a tailored domain-specific application, code files, and test suite for any custom prompt!
+  return synthesizeDomainSpecificScenario(
+    cleanPrompt,
+    modelUsed,
+    activePolicyHash,
+    existingKnowledgeUnits
+  );
 }
