@@ -48,7 +48,8 @@ import {
   executeStage4VerificationAuditLive,
   executeStage4SurgicalRepairLive,
   executeStage5SealAndExtractLive,
-  clearWorkerTokenStream
+  clearWorkerTokenStream,
+  emitOfflineRoleTelemetry
 } from './lib/localLlmBridge';
 import { LifecycleSimulator } from './components/LifecycleSimulator';
 import { LiveRoleLogsConsole } from './components/LiveRoleLogsConsole';
@@ -207,6 +208,7 @@ export default function App() {
         activePolicyHash,
         knowledgeUnits
       );
+      const t1 = emitOfflineRoleTelemetry('S1', full, llmConfig);
       setActiveScenario({
         ...full,
         decisions: [],
@@ -214,6 +216,7 @@ export default function App() {
         files: [],
         stageFlows: [full.stageFlows[0]]
       });
+      setWorkerTelemetries([t1]);
       setCurrentStage(0);
       setHighestCompletedStage(0);
       setClarifiedPlatform(null);
@@ -351,31 +354,61 @@ export default function App() {
         knowledgeUnits
       );
       if (nextStage === 1) {
+        const t2 = emitOfflineRoleTelemetry('S2', full, llmConfig);
         setActiveScenario((prev) => ({
           ...prev,
           requirements: full.requirements,
           decisions: full.decisions,
           stageFlows: [...prev.stageFlows.slice(0, 1), full.stageFlows[1] || full.stageFlows[0]]
         }));
+        setWorkerTelemetries((prev) => [
+          t2,
+          ...prev.filter((w) => w.workerRole !== 'STAGE2_ARCHITECT_PLANNER')
+        ]);
       } else if (nextStage === 2) {
+        const t3a = emitOfflineRoleTelemetry('S3A', full, llmConfig);
+        const t3b = emitOfflineRoleTelemetry('S3B', full, llmConfig);
         setActiveScenario((prev) => ({
           ...prev,
           files: full.files,
           stageFlows: [...prev.stageFlows.slice(0, 2), full.stageFlows[2] || full.stageFlows[0]]
         }));
         setCheckpointHash('sha256:s3_offline_chk');
+        setWorkerTelemetries((prev) => [
+          t3b,
+          t3a,
+          ...prev.filter(
+            (w) =>
+              w.workerRole !== 'STAGE3_WORKER_A_CODER' &&
+              w.workerRole !== 'STAGE3_WORKER_B_TEST_SYNTH'
+          )
+        ]);
       } else if (nextStage === 3) {
+        const t4a = emitOfflineRoleTelemetry('S4A', full, llmConfig);
         setActiveScenario((prev) => ({
           ...prev,
           stageFlows: [...prev.stageFlows.slice(0, 3), full.stageFlows[3] || full.stageFlows[0]]
         }));
+        setWorkerTelemetries((prev) => [
+          t4a,
+          ...prev.filter((w) => w.workerRole !== 'STAGE4_VERIFIER_CRITIC')
+        ]);
       } else if (nextStage === 4) {
+        const t5 = emitOfflineRoleTelemetry('S5', full, llmConfig);
         setSealId('#SEAL-DELIVERY-2026');
         setActiveScenario((prev) => ({
           ...prev,
           extractedKnowledge: full.extractedKnowledge,
           stageFlows: [...prev.stageFlows.slice(0, 4), full.stageFlows[4] || full.stageFlows[0]]
         }));
+        setKnowledgeUnits((prev) => {
+          const rest = prev.filter((u) => u.id !== full.extractedKnowledge.id);
+          return [full.extractedKnowledge, ...rest];
+        });
+        setWorkerTelemetries((prev) => [
+          t5,
+          ...prev.filter((w) => w.workerRole !== 'STAGE5_KNOWLEDGE_EXTRACTOR')
+        ]);
       }
       setCurrentStage(nextStage);
       setHighestCompletedStage((prev) => Math.max(prev, nextStage));
@@ -412,9 +445,20 @@ export default function App() {
       setLlmStatusMessage(
         err instanceof Error ? err.message : 'Local model daemon is offline. Applied deterministic AST repair.'
       );
+      const full = synthesizeDynamicScenarioFromPrompt(
+        activeScenario.rawPrompt,
+        llmConfig.coderModel,
+        activePolicyHash,
+        knowledgeUnits
+      );
+      const t4b = emitOfflineRoleTelemetry('S4B', full, llmConfig);
       setRepaired(true);
       setCheckpointHash('sha256:repaired_v1_1');
       setSelectedComponentId('comp_verifier');
+      setWorkerTelemetries((prev) => [
+        t4b,
+        ...prev.filter((w) => w.workerRole !== 'STAGE4_SURGICAL_PATCHER')
+      ]);
     } finally {
       setIsStageExecuting(false);
       setExecutingStageLabel('');
@@ -530,15 +574,24 @@ export default function App() {
         activePolicyHash,
         knowledgeUnits
       );
+      const t1 = emitOfflineRoleTelemetry('S1', full, llmConfig);
+      const t2 = emitOfflineRoleTelemetry('S2', full, llmConfig);
+      const t3a = emitOfflineRoleTelemetry('S3A', full, llmConfig);
+      const t3b = emitOfflineRoleTelemetry('S3B', full, llmConfig);
+      const t4a = emitOfflineRoleTelemetry('S4A', full, llmConfig);
+      const t4b = emitOfflineRoleTelemetry('S4B', full, llmConfig);
+      const t5 = emitOfflineRoleTelemetry('S5', full, llmConfig);
       setIsRuntimeIdle(false);
       setClarifiedPlatform('web');
       setRepaired(true);
       setSealId('#SEAL-DELIVERY-2026');
       setActiveScenario(full);
-      setCheckpointHash('sha256:s3_offline_chk');
-      setCurrentStage(2);
+      setWorkerTelemetries([t5, t4b, t4a, t3b, t3a, t2, t1]);
+      setKnowledgeUnits((prev) => [full.extractedKnowledge, ...prev.filter((u) => u.id !== full.extractedKnowledge.id)]);
+      setCheckpointHash('sha256:repaired_v1_1');
+      setCurrentStage(4);
       setHighestCompletedStage(4);
-      setSelectedComponentId('comp_coder');
+      setSelectedComponentId('comp_registry');
     } finally {
       setIsStageExecuting(false);
       setExecutingStageLabel('');
@@ -593,6 +646,9 @@ export default function App() {
         activePolicyHash,
         knowledgeUnits
       );
+      const t2 = emitOfflineRoleTelemetry('S2', full, llmConfig);
+      const t3a = emitOfflineRoleTelemetry('S3A', full, llmConfig);
+      const t3b = emitOfflineRoleTelemetry('S3B', full, llmConfig);
       setClarifiedPlatform('web');
       setActiveScenario((prev) => ({
         ...prev,
@@ -601,6 +657,7 @@ export default function App() {
         files: full.files,
         stageFlows: full.stageFlows.slice(0, 3)
       }));
+      setWorkerTelemetries((prev) => [t3b, t3a, t2, ...prev]);
       setCheckpointHash('sha256:s3_offline_chk');
       setCurrentStage(2);
       setHighestCompletedStage((prev) => Math.max(prev, 2));
@@ -726,15 +783,27 @@ export default function App() {
               <button
                 type="button"
                 data-testid="nav-result-preview"
-                className={`workspace-tab ${activeTab === 'result_preview' ? 'is-active is-live' : ''}`}
+                disabled={isRuntimeIdle || highestCompletedStage < 4}
+                title={
+                  !isRuntimeIdle && highestCompletedStage >= 4
+                    ? 'Open Sealed Deliverable Result & Download Center'
+                    : 'Complete Steps 1 → 5 (including Step 4 Surgical Repair) to unlock Sealed Result'
+                }
+                className={`workspace-tab ${activeTab === 'result_preview' ? 'is-active is-live' : ''} ${
+                  isRuntimeIdle || highestCompletedStage < 4 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 aria-label="Result & Download"
                 aria-current={activeTab === 'result_preview' ? 'page' : undefined}
-                onClick={() => switchWorkspaceTab('result_preview')}
+                onClick={() => {
+                  if (!isRuntimeIdle && highestCompletedStage >= 4) {
+                    switchWorkspaceTab('result_preview');
+                  }
+                }}
               >
                 <Eye size={13} className="text-[#ff8a4c]" />
                 <span className="font-bold text-white">Result &amp; Download</span>
                 <span className="text-[10px] font-mono font-bold text-[#0b1018] bg-[#ff8a4c] px-1.5 py-0.2 rounded">
-                  HTML / ZIP
+                  {!isRuntimeIdle && highestCompletedStage >= 4 ? 'HTML / ZIP' : '🔒 S5 Seal'}
                 </span>
               </button>
 
@@ -817,91 +886,107 @@ export default function App() {
 
       <main id="top" className="main-content">
         {/* ===============================================================
-            PARALLEL LOCAL LLM RUNTIME CONTROL & TELEMETRY BAR
+            COMPACT PARALLEL LOCAL LLM RUNTIME COMMAND BAR
            =============================================================== */}
         <section
           aria-label="Parallel Local LLM Runtime Control Bar"
-          className="mb-6 rounded-2xl border border-[#2b3546] bg-[#151c28] p-4 sm:p-5 space-y-4"
+          className="mb-4 rounded-xl border border-[#243247] bg-[#111826] px-4 py-3 space-y-2.5 shadow-md"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#253142] pb-3.5">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`px-2.5 py-1 rounded-md font-mono text-xs font-bold flex items-center gap-1.5 border ${
-                  llmReachable
-                    ? 'bg-[#53d6ab]/15 border-[#53d6ab]/50 text-[#53d6ab]'
-                    : 'bg-[#fb8797]/15 border-[#fb8797]/50 text-[#fb8797]'
-                }`}
+          {/* Row 1: Full-Width Prompt Input + Step-by-Step / Auto-Run Dispatch */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (customPromptInput.trim()) {
+                handleStartRuntimeWithPrompt(customPromptInput);
+              }
+            }}
+            className="flex flex-col md:flex-row items-stretch md:items-center gap-2 min-w-0"
+          >
+            <input
+              type="text"
+              data-testid="top-bar-prompt-input"
+              value={customPromptInput}
+              onChange={(e) => setCustomPromptInput(e.target.value)}
+              placeholder="Enter your software engineering prompt (e.g., i need landing-page for my site)..."
+              className="flex-1 min-w-0 rounded-lg border border-[#2b3c56] bg-[#0a0f18] px-3.5 py-2 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
+            />
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <button
+                type="submit"
+                data-testid="top-start-step1-btn"
+                disabled={isStageExecuting || !customPromptInput.trim()}
+                className="px-3.5 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
               >
-                <Cpu size={14} />
-                <span>
-                  {llmReachable ? 'LOCAL LLM DAEMON ONLINE' : 'LOCAL LLM DAEMON OFFLINE'}
-                </span>
-              </span>
+                <Play size={13} />
+                <span>Start Step 1 Intake Role (S0 → S1) →</span>
+              </button>
+              <button
+                type="button"
+                data-testid="top-autorun-btn"
+                disabled={isStageExecuting}
+                onClick={() =>
+                  handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+                }
+                className="px-3.5 py-2 rounded-lg bg-[#162234] hover:bg-[#1e2e46] border border-[#53d6ab]/45 text-[#53d6ab] disabled:opacity-50 font-mono text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+              >
+                {isStageExecuting ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Running Roles...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play size={13} />
+                    <span>Auto-Execute All 5 Stages (S1→S5)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
 
-              {/* Worker A (Coder) Individual Availability Badge */}
-              <span className="px-2.5 py-1 rounded-lg bg-[#0e131d] border border-[#53d6ab]/40 font-mono text-xs text-white inline-flex items-center gap-1.5">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    coderWorkerStatus.available ? 'bg-[#53d6ab]' : 'bg-[#fb8797]'
-                  }`}
-                />
-                <span>Worker A (Coder):</span>
-                <strong className="text-[#53d6ab]">{coderWorkerStatus.modelName}</strong>
-                <span
-                  className={`px-1.5 py-0.5 rounded bg-[#142234] text-[10px] font-bold ${
-                    coderWorkerStatus.available ? 'text-[#53d6ab]' : 'text-[#fb8797]'
-                  }`}
-                >
-                  {coderWorkerStatus.mode === 'DAEMON_ONLINE'
-                    ? `ONLINE · ${coderWorkerStatus.latencyMs}ms`
-                    : coderWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                      ? 'NOT PULLED'
-                      : 'OFFLINE'}
-                </span>
+          {/* Row 2: Compact Worker Telemetry & Configuration Trigger */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1e293b] text-xs font-mono">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#94a3b8]">
+              <span
+                data-testid="global-runtime-status"
+                role="status"
+                className="font-bold text-white px-2 py-0.5 rounded bg-[#182334] border border-[#2b3c56]"
+              >
+                {isRuntimeIdle
+                  ? 'S0: Idle'
+                  : `Step ${currentStage + 1}/5 Active`}
               </span>
-
-              {/* Worker B (Verifier) Individual Availability Badge */}
-              <span className="px-2.5 py-1 rounded-lg bg-[#0e131d] border border-[#8caef9]/40 font-mono text-xs text-white inline-flex items-center gap-1.5">
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    verifierWorkerStatus.available ? 'bg-[#8caef9]' : 'bg-[#fb8797]'
-                  }`}
-                />
-                <span>Worker B (Verifier):</span>
-                <strong className="text-[#8caef9]">{verifierWorkerStatus.modelName}</strong>
-                <span
-                  className={`px-1.5 py-0.5 rounded bg-[#142234] text-[10px] font-bold ${
-                    verifierWorkerStatus.available ? 'text-[#8caef9]' : 'text-[#fb8797]'
-                  }`}
-                >
-                  {verifierWorkerStatus.mode === 'DAEMON_ONLINE'
-                    ? `ONLINE · ${verifierWorkerStatus.latencyMs}ms`
-                    : verifierWorkerStatus.mode === 'MODEL_NOT_PULLED'
-                      ? 'NOT PULLED'
-                      : 'OFFLINE'}
-                </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                Coder A: <strong className="text-[#53d6ab]">{coderWorkerStatus.modelName}</strong>
               </span>
-
-              <span className="font-mono text-xs text-[#a2afc3]">{llmStatusMessage}</span>
+              <span aria-hidden="true">·</span>
+              <span>
+                Verifier B: <strong className="text-[#8caef9]">{verifierWorkerStatus.modelName}</strong>
+              </span>
+              <span aria-hidden="true">·</span>
+              <span className={llmReachable ? 'text-[#53d6ab]' : 'text-[#fb8797]'}>
+                {llmReachable ? 'Daemon Online' : 'Deterministic Fallback'}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => runLocalModelProbe(llmConfig)}
-                className="px-2.5 py-1.5 rounded-lg border border-[#2b3a4f] bg-[#0e131d] hover:border-[#53d6ab] text-xs font-mono text-[#c8d3e2] flex items-center gap-1 cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border border-[#2b3a4f] bg-[#0d131d] hover:border-[#53d6ab] text-[11px] font-mono text-[#c8d3e2] flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                 title="Ping both Coder and Verifier models independently"
               >
-                <RefreshCw size={13} className={isProbingWorkers ? 'animate-spin text-[#53d6ab]' : ''} />
-                <span>Ping Both Workers</span>
+                <RefreshCw size={12} className={isProbingWorkers ? 'animate-spin text-[#53d6ab]' : ''} />
+                <span>Ping Workers</span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowLlmSettings(!showLlmSettings)}
-                className="px-3 py-1.5 rounded-lg border border-[#324665] bg-[#0e131d] hover:border-[#ff8a4c] text-xs font-mono font-bold text-white flex items-center gap-1.5 cursor-pointer"
+                className="px-2.5 py-1 rounded-lg border border-[#324665] bg-[#0d131d] hover:border-[#ff8a4c] text-[11px] font-mono font-bold text-white flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
               >
-                <Settings2 size={14} className="text-[#ff8a4c]" />
-                <span>Configure Parallel Local Models</span>
+                <Settings2 size={13} className="text-[#ff8a4c]" />
+                <span>Configure Models</span>
               </button>
             </div>
           </div>
@@ -949,7 +1034,7 @@ export default function App() {
 
                 <div>
                   <label className="block font-mono text-xs text-[#53d6ab] mb-1">
-                    Worker A: Coder & Planner Model
+                    Worker A: Coder &amp; Planner Model
                   </label>
                   <input
                     type="text"
@@ -1002,7 +1087,7 @@ export default function App() {
                       : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#53d6ab]'
                   }`}
                 >
-                  ⚡ Single Model: qwen3:4b (4B Lightweight · Low VRAM)
+                  Single Model: qwen3:4b (4B Lightweight · Low VRAM)
                 </button>
                 <button
                   type="button"
@@ -1050,7 +1135,7 @@ export default function App() {
                 <div className="flex flex-wrap items-center gap-2 text-[#a2afc3]">
                   <span>To allow your browser to connect directly to Ollama on your laptop, run:</span>
                   <code className="px-2.5 py-1 rounded bg-[#162234] text-[#ffa875] border border-[#2b3d59]">
-                    OLLAMA_ORIGINS="*" ollama serve
+                    OLLAMA_ORIGINS=&quot;*&quot; ollama serve
                   </code>
                   <button
                     type="button"
@@ -1074,163 +1159,20 @@ export default function App() {
                   }}
                   className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold cursor-pointer"
                 >
-                  Save & Connect Parallel Workers
+                  Save &amp; Connect Parallel Workers
                 </button>
               </div>
             </div>
           )}
-
-          {/* Always-Visible Top Prompt & Instant Result Bar */}
-          <div className="space-y-2.5 pt-2.5 border-t border-[#233144]">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (customPromptInput.trim()) {
-                  handleOpenResultWithPrompt(customPromptInput);
-                }
-              }}
-              className="flex flex-col lg:flex-row gap-2.5"
-            >
-              <input
-                type="text"
-                value={customPromptInput}
-                onChange={(e) => setCustomPromptInput(e.target.value)}
-                placeholder="Enter your prompt (e.g., i need landing-page for my site)..."
-                className="flex-1 rounded-xl border border-[#304462] bg-[#0d131d] px-3.5 py-2.5 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
-              />
-              <div className="flex flex-wrap items-center gap-2 shrink-0">
-                <button
-                  type="submit"
-                  data-testid="top-open-result-btn"
-                  disabled={isStageExecuting}
-                  className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
-                >
-                  <Eye size={14} />
-                  <span>Get My Result (Live Preview + HTML / ZIP) ➔</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={isStageExecuting}
-                  onClick={() =>
-                    handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
-                  }
-                  className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  {isStageExecuting ? (
-                    <>
-                      <Loader2 size={14} className="animate-spin" />
-                      <span>Running Roles...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} />
-                      <span>Run All 5 Stages</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  disabled={isStageExecuting || !customPromptInput.trim()}
-                  onClick={() => {
-                    if (customPromptInput.trim()) {
-                      handleStartRuntimeWithPrompt(customPromptInput);
-                    }
-                  }}
-                  className="px-3.5 py-2.5 rounded-xl bg-[#162030] hover:bg-[#1e2c42] border border-[#2d3f59] disabled:opacity-50 text-[#c8d3e2] font-mono text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Send size={13} />
-                  <span>Step-by-Step (S0→S1)</span>
-                </button>
-              </div>
-            </form>
-          </div>
         </section>
-
-        {/* Overview Hero (Shown only in S0 Idle on Flow Studio so Active Stages & Result Preview are immediately above the fold) */}
-        {isRuntimeIdle && activeTab === 'flow_studio' && (
-          <section className="overview" aria-labelledby="overview-title">
-            <div className="overview-copy">
-              <div className="eyebrow">
-                PARALLEL LOCAL LLM GOVERNANCE RUNTIME · ABSTRACT MODEL (M_SE)
-              </div>
-              <h1 id="overview-title">
-                A live runtime that governs <span>parallel local model roles</span> step by step.
-              </h1>
-              <p>
-                ShiftCore never outputs static results. Every stage’s artifacts emerge dynamically in
-                chronological order as <strong>Worker A ({llmConfig.coderModel})</strong> and{' '}
-                <strong>Worker B ({llmConfig.verifierModel})</strong> execute their assigned roles.
-              </p>
-              <div className="overview-actions">
-                <button
-                  type="button"
-                  className="primary-action"
-                  onClick={() =>
-                    handleOpenResultWithPrompt(customPromptInput || 'i need landing-page for my site')
-                  }
-                >
-                  Open Live Result &amp; Download (HTML / ZIP) <Eye size={17} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="text-action"
-                  onClick={() => switchWorkspaceTab('abstract_model')}
-                >
-                  Inspect Formal Abstract SE Model <Boxes size={16} aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
-            <div className="task-card">
-              <div className="task-card-heading">
-                <span className="eyebrow">RUNTIME STATE: S0 IDLE</span>
-                <span className="task-id">ZERO STATIC DATA</span>
-              </div>
-              <div className="task-request">
-                <div>
-                  <h2 className="text-lg font-extrabold text-white">
-                    Awaiting Developer Prompt (S0 Idle)
-                  </h2>
-                  <p className="mt-1 text-xs text-[#a2afc3]">
-                    Click <strong>Get My Result</strong> above to immediately view and download your Landing Page, or run{' '}
-                    <code className="font-mono text-[#53d6ab]">WORKER-S1-INTAKE</code> on{' '}
-                    <code className="font-mono text-[#53d6ab]">{llmConfig.coderModel}</code>.
-                  </p>
-                </div>
-              </div>
-              <div className="task-card-status">
-                <span
-                  className="status-pill tone-amber"
-                  data-testid="global-runtime-status"
-                  role="status"
-                >
-                  S0: Idle / Waiting for Prompt
-                </span>
-                <span className="task-stage tabular-nums">Stage 0 of 5</span>
-              </div>
-              <div className="task-progress" aria-label="Runtime Stage Progress">
-                {STAGE_DEFINITIONS.map((stage) => (
-                  <span key={stage.id} className="" />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
 
         <section
           id="workspace"
-          className="workspace-section"
+          className="workspace-section space-y-5"
           aria-label={workspaceTabs.find((tab) => tab.id === activeTab)?.label}
         >
           {activeTab === 'flow_studio' && (
             <>
-              <LiveRoleLogsConsole
-                coderModel={llmConfig.coderModel}
-                verifierModel={llmConfig.verifierModel}
-                isStageExecuting={isStageExecuting}
-                executingStageLabel={executingStageLabel}
-                isRuntimeIdle={isRuntimeIdle}
-              />
               <LifecycleSimulator
                 isRuntimeIdle={isRuntimeIdle}
                 isStageExecuting={isStageExecuting}
@@ -1258,6 +1200,13 @@ export default function App() {
                 onFocusComponent={setSelectedComponentId}
                 onChangeDependencyFilter={setDependencyFilter}
                 onOpenKnowledgeTab={() => switchWorkspaceTab('knowledge_graph')}
+              />
+              <LiveRoleLogsConsole
+                coderModel={llmConfig.coderModel}
+                verifierModel={llmConfig.verifierModel}
+                isStageExecuting={isStageExecuting}
+                executingStageLabel={executingStageLabel}
+                isRuntimeIdle={isRuntimeIdle}
               />
             </>
           )}

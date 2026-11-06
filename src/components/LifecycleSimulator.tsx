@@ -111,7 +111,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
   const [codeViewVersion, setCodeViewVersion] = useState<'v1' | 'v1_1'>('v1');
   const [showProofTrace, setShowProofTrace] = useState<boolean>(true);
   const [showRuntimeMap, setShowRuntimeMap] = useState<boolean>(false);
-  const [showLiveRoleLogs, setShowLiveRoleLogs] = useState<boolean>(true);
+  const [showLiveRoleLogs, setShowLiveRoleLogs] = useState<boolean>(false);
   const [showSystemPromptInLogs, setShowSystemPromptInLogs] = useState<boolean>(false);
   const [selectedWorkerFilter, setSelectedWorkerFilter] = useState<string>('ACTIVE_STAGE');
   const [layerFilter, setLayerFilter] = useState<'ALL' | 'DYNAMIC_ONLY' | 'STATIC_ONLY'>('ALL');
@@ -359,6 +359,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <button
                   type="submit"
+                  data-testid="s0-start-step1-btn"
                   disabled={isStageExecuting || !idlePromptInput.trim()}
                   className="px-5 py-3.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
                   title="Dispatch prompt to start Stage 1 Intake & Ambiguity Role"
@@ -371,7 +372,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   ) : (
                     <>
                       <Play size={17} />
-                      <span>Start Step 1 Role →</span>
+                      <span>Start Step 1 Role (S0 → S1) →</span>
                     </>
                   )}
                 </button>
@@ -384,23 +385,10 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     }
                   }}
                   className="px-5 py-3.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
-                  title="Execute all 5 stages end-to-end and jump straight to generated code and verification"
+                  title="Execute all 5 stages sequentially end-to-end"
                 >
                   <Zap size={17} />
-                  <span>Auto-Run All 5 Steps to Code ⚡</span>
-                </button>
-                <button
-                  type="button"
-                  data-testid="s0-open-result-btn"
-                  disabled={isStageExecuting}
-                  onClick={() => {
-                    onOpenResultPreview?.(idlePromptInput.trim() || 'i need landing-page for my site');
-                  }}
-                  className="px-5 py-3.5 rounded-xl bg-[#8caef9] hover:bg-[#a6c1fa] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
-                  title="Immediately open the rendered live preview and download standalone HTML or ZIP"
-                >
-                  <Eye size={17} />
-                  <span>Open Live Result &amp; Download (HTML / ZIP) ➔</span>
+                  <span>Auto-Run All 5 Steps (S1 → S5) ⚡</span>
                 </button>
               </div>
             </div>
@@ -676,41 +664,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
 
   return (
     <div className="lifecycle-workspace">
-      {/* Persistent Deliverable Result Banner across all stages */}
-      <div className="mb-4 rounded-2xl border-2 border-[#ff8a4c]/60 bg-gradient-to-r from-[#ff8a4c]/15 via-[#131c2b] to-[#53d6ab]/15 p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 font-mono text-xs font-extrabold text-[#ff8a4c]">
-            <Eye size={15} className="text-[#53d6ab]" />
-            <span>FINAL DELIVERABLE RESULT READY FOR: &ldquo;{activeScenario.rawPrompt}&rdquo;</span>
-          </div>
-          <p className="text-xs text-[#c8d3e2]">
-            View the <strong>Live Interactive Landing Page Preview</strong>, copy the verified React/TypeScript files, or download a ready-to-use <strong>standalone index.html</strong> &amp; <strong>project .zip</strong>:
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            data-testid="banner-open-result-btn"
-            onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
-            className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-lg transition-all"
-          >
-            <Eye size={15} />
-            <span>Open Live Result Preview &amp; Download (HTML / ZIP) ➔</span>
-          </button>
-          {currentStage !== 2 && (
-            <button
-              type="button"
-              onClick={() => onAutoAdvanceToStage3?.()}
-              className="px-3.5 py-2.5 rounded-xl bg-[#151c28] hover:bg-[#1e293b] text-[#53d6ab] border border-[#53d6ab]/40 font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
-            >
-              <Code2 size={14} />
-              <span>Inspect Step 3 Source Code</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 5-Step Journey Stepper (Strictly Gated by Role Execution Order) */}
+      {/* 1. 5-Step Journey Stepper (Top of Workspace, Strictly Gated by Role Execution Order) */}
       <nav aria-label="Task journey" className="journey-stepper">
         {STEPPER_QUESTIONS.map((step, index) => {
           const stageIndex = index as StageIndex;
@@ -748,232 +702,239 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
         })}
       </nav>
 
+      {/* 2. Sequential Step-by-Step Runtime Progression Bar */}
+      <div
+        data-testid="step-progression-bar"
+        className="border-b border-[#25354d] bg-gradient-to-r from-[#131d2e] via-[#0f1726] to-[#131d2e] px-5 py-3.5 flex flex-wrap items-center justify-between gap-4"
+      >
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 font-mono text-xs font-extrabold text-[#53d6ab]">
+            <Activity size={14} className="text-[#ff8a4c]" />
+            <span>
+              SEQUENTIAL RUNTIME · STEP {currentStage + 1} OF 5 · TASK: &ldquo;{activeScenario.rawPrompt}&rdquo;
+            </span>
+          </div>
+          <p className="text-xs text-[#cbd5e1]">
+            {currentStage === 0 && clarifiedPlatform !== 'web' && (
+              <>
+                <strong>Step 1 Gate Active:</strong> Select Option 1 (Recommended) in the Ambiguity Gate below to lock <code className="text-[#53d6ab]">TaskSpec</code> at <code className="text-[#53d6ab]">0.00 bits</code> entropy and unlock Step 2.
+              </>
+            )}
+            {currentStage === 0 && clarifiedPlatform === 'web' && (
+              <>
+                <strong>✓ Step 1 Gate Resolved (0.00 bits entropy):</strong> <code className="text-[#53d6ab]">TaskSpec</code> is locked. Proceed to <strong>Step 2 (Architect &amp; Planner Role)</strong>.
+              </>
+            )}
+            {currentStage === 1 && (
+              <>
+                <strong>✓ Step 2 Plan Complete:</strong> 8 Formal Requirements (R1..R8) &amp; ADRs locked. Proceed to <strong>Step 3 (Parallel Coder ∥ Test Oracle Synthesis)</strong>.
+              </>
+            )}
+            {currentStage === 2 && (
+              <>
+                <strong>✓ Step 3 Parallel Synthesis Complete:</strong> Worker A &amp; Worker B synthesized <code className="text-[#53d6ab]">#S3-01 (v1.0)</code>. Inspect code below, then proceed to <strong>Step 4 (Verification Oracle Audit)</strong>.
+              </>
+            )}
+            {currentStage === 3 && !repaired && (
+              <>
+                <strong className="text-[#fb8797]">✕ Step 4A Oracle Blocked Release (7/8 PASS · 1 FAIL):</strong> Dispatch <strong>Role 4B Surgical AST Repair</strong> to patch the failing AST node on <code className="text-[#ffa875]">#S3-01</code>.
+              </>
+            )}
+            {currentStage === 3 && repaired && (
+              <>
+                <strong className="text-[#53d6ab]">✓ Step 4B Surgical AST Patch Verified (8/8 PASS):</strong> Checkpoint <code className="text-[#53d6ab]">#S3-01-v1.1</code> verified. Proceed to <strong>Step 5 (Cryptographic Seal &amp; Result Delivery)</strong>.
+              </>
+            )}
+            {currentStage === 4 && (
+              <>
+                <strong className="text-[#53d6ab]">✓ Step 5 Complete &amp; Sealed ({sealId}):</strong> All 5 sequential runtime stages verified. Open your <strong>Interactive Landing Page Preview &amp; Download Center (HTML / ZIP)</strong>.
+              </>
+            )}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {currentStage === 0 && clarifiedPlatform !== 'web' && (
+            <button
+              type="button"
+              data-testid="step1-resolve-gate-btn"
+              disabled={isStageExecuting}
+              onClick={() => onSelectPlatformAndCompileStage2('web')}
+              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Check size={14} />
+              <span>1. Select Recommended Option &amp; Lock TaskSpec →</span>
+            </button>
+          )}
+          {currentStage === 0 && clarifiedPlatform === 'web' && (
+            <button
+              type="button"
+              data-testid="step1-to-step2-btn"
+              disabled={isStageExecuting}
+              onClick={() => onAdvanceToStageWithLiveWorker(1)}
+              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Play size={14} />
+              <span>Run Step 2: Architect &amp; Planner Role (S1 → S2) →</span>
+            </button>
+          )}
+          {currentStage === 1 && (
+            <button
+              type="button"
+              data-testid="step2-to-step3-btn"
+              disabled={isStageExecuting}
+              onClick={() => onAdvanceToStageWithLiveWorker(2)}
+              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Code2 size={14} />
+              <span>Run Step 3: Parallel Coder ∥ Test Suite (S2 → S3) →</span>
+            </button>
+          )}
+          {currentStage === 2 && (
+            <button
+              type="button"
+              data-testid="step3-to-step4-btn"
+              disabled={isStageExecuting}
+              onClick={() => onAdvanceToStageWithLiveWorker(3)}
+              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Shield size={14} />
+              <span>Run Step 4: Verification Oracle Audit (S3 → S4) →</span>
+            </button>
+          )}
+          {currentStage === 3 && !repaired && (
+            <button
+              type="button"
+              data-testid="step4-repair-btn"
+              disabled={isStageExecuting}
+              onClick={onApplySurgicalRepairWithLiveWorker}
+              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Zap size={14} />
+              <span>Run Role 4B: Apply Surgical AST Patch (v1.0 → v1.1) →</span>
+            </button>
+          )}
+          {currentStage === 3 && repaired && (
+            <button
+              type="button"
+              data-testid="step4-to-step5-btn"
+              disabled={isStageExecuting}
+              onClick={() => onAdvanceToStageWithLiveWorker(4)}
+              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Sparkles size={14} />
+              <span>Run Step 5: Issue Cryptographic Seal &amp; Result (S4 → S5) →</span>
+            </button>
+          )}
+          {currentStage === 4 && (
+            <button
+              type="button"
+              data-testid="step5-open-result-btn"
+              onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
+              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+            >
+              <Eye size={14} />
+              <span>Open Live Result Preview &amp; Download (HTML / ZIP) ➔</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Main Split-Screen Workspace */}
       <div className="lifecycle-grid">
         {/* LEFT COLUMN */}
         <div className="lifecycle-main">
-          {/* Workspace Stage Header */}
-          <div className="stage-heading">
-            <div>
-              <div className="stage-heading-kicker">{activeHeader.kicker}</div>
-              <h2 className="text-white">{activeHeader.title}</h2>
-            </div>
-            <div
-              className={`stage-status font-mono font-medium border ${
-                currentStage === 3 && !repaired
-                  ? 'border-[#fb8797]/50 bg-[#fb8797]/15 text-[#fb8797]'
-                  : (currentStage === 0 && clarifiedPlatform === 'web') ||
-                      currentStage === 4 ||
-                      (currentStage === 3 && repaired)
-                    ? 'border-[#53d6ab]/50 bg-[#53d6ab]/15 text-[#53d6ab]'
-                    : 'border-[#ff8a4c]/50 bg-[#ff8a4c]/15 text-[#ffa875]'
-              }`}
-            >
-              {activeHeader.status}
-            </div>
-          </div>
-
-          {/* =========================================================
-              DYNAMIC LIVE VS STATIC GOVERNANCE LAYER SELECTOR & LEGEND
-             ========================================================= */}
-          <div className="mb-4 rounded-2xl border border-[#26374d] bg-[#0c121d] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="font-mono text-xs font-bold text-[#a2afc3] flex items-center gap-1.5">
-                <Layers size={14} className="text-[#8caef9]" />
-                Layer Separation:
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#53d6ab]/15 border border-[#53d6ab]/40 text-[#53d6ab] font-mono text-[11px] font-extrabold">
-                <span className="w-2 h-2 rounded-full bg-[#53d6ab] animate-pulse" />
-                ⚡ DYNAMIC (Live Local Model Output)
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#8caef9]/15 border border-[#8caef9]/40 text-[#8caef9] font-mono text-[11px] font-extrabold">
-                🔒 STATIC (Governance Policy & Metamodel)
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1.5 font-mono text-xs">
-              <span className="text-[#7c8ca5] text-[11px] mr-1 hidden sm:inline">Highlight Filter:</span>
-              <button
-                type="button"
-                onClick={() => setLayerFilter('ALL')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                  layerFilter === 'ALL'
-                    ? 'bg-[#ff8a4c] text-[#0c1018] border-[#ff8a4c]'
-                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#ff8a4c]'
+          {/* Compact Stage Header + Layer Filter + Worker Stream Toggle */}
+          <div className="rounded-xl border border-[#243247] bg-[#111826] p-4 space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="stage-heading-kicker">{activeHeader.kicker}</div>
+                <h2 className="text-lg sm:text-xl font-bold text-white mt-0.5">
+                  {activeHeader.title}
+                </h2>
+              </div>
+              <div
+                className={`stage-status font-mono font-semibold border text-xs ${
+                  currentStage === 3 && !repaired
+                    ? 'border-[#fb8797]/50 bg-[#fb8797]/15 text-[#fb8797]'
+                    : (currentStage === 0 && clarifiedPlatform === 'web') ||
+                        currentStage === 4 ||
+                        (currentStage === 3 && repaired)
+                      ? 'border-[#53d6ab]/50 bg-[#53d6ab]/15 text-[#53d6ab]'
+                      : 'border-[#ff8a4c]/50 bg-[#ff8a4c]/15 text-[#ffa875]'
                 }`}
               >
-                All Layers
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayerFilter('DYNAMIC_ONLY')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                  layerFilter === 'DYNAMIC_ONLY'
-                    ? 'bg-[#53d6ab] text-[#0c1018] border-[#53d6ab]'
-                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#53d6ab]'
-                }`}
-              >
-                ⚡ Live Model Only
-              </button>
-              <button
-                type="button"
-                onClick={() => setLayerFilter('STATIC_ONLY')}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                  layerFilter === 'STATIC_ONLY'
-                    ? 'bg-[#8caef9] text-[#0c1018] border-[#8caef9]'
-                    : 'bg-[#151c28] text-[#c8d3e2] border-[#2b3a4f] hover:border-[#8caef9]'
-                }`}
-              >
-                🔒 Static Policy Only
-              </button>
+                {activeHeader.status}
+              </div>
             </div>
-          </div>
 
-          {/* =========================================================
-              LIVE LOCAL MODEL ROLE PROGRESS BAR & SUB-STEP TRACKER
-             ========================================================= */}
-          <div className="mb-4 rounded-2xl border border-[#ff8a4c]/55 bg-[#101826] p-4 space-y-3 shadow-lg">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                <span className="px-2.5 py-1 rounded bg-[#ff8a4c] text-[#0c1018] font-extrabold">
+            {/* Unified Role Telemetry & Layer Filter Strip */}
+            <div className="pt-2.5 border-t border-[#1e2b3e] flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-2 py-0.5 rounded bg-[#ff8a4c] text-[#0c1018] font-extrabold text-[11px]">
                   {activeRoleMeta.roleId}
                 </span>
-                <span className="text-white font-bold">{activeRoleMeta.roleTitle}</span>
-                <span className="px-2 py-0.5 rounded bg-[#162234] text-[#53d6ab] border border-[#293d5c]">
-                  Model: {activeRoleMeta.modelAssigned}
+                <span className="text-[#cbd5e1] text-[11px]">{activeRoleMeta.roleTitle}</span>
+                <span className="text-[#53d6ab] font-bold text-[11px] tabular-nums">
+                  ({activeRoleMeta.modelAssigned} · {progressPct}%)
                 </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                {streamProgress < 100 && !isStageExecuting && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex items-center gap-1 bg-[#0b1019] p-0.5 rounded-lg border border-[#233248]">
                   <button
                     type="button"
-                    onClick={() => setIsStreamPaused((p) => !p)}
-                    className="px-2.5 py-1 rounded-lg border border-[#354b6d] bg-[#162133] hover:border-[#ffa875] text-[#ffa875] font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                    onClick={() => setLayerFilter('ALL')}
+                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                      layerFilter === 'ALL'
+                        ? 'bg-[#1e2b3e] text-white'
+                        : 'text-[#8fa2bd] hover:text-white'
+                    }`}
                   >
-                    {isStreamPaused ? <Play size={12} /> : <Pause size={12} />}
-                    <span>{isStreamPaused ? 'Resume Stream' : 'Pause Stream'}</span>
+                    All Layers
                   </button>
-                )}
-                {streamProgress < 100 ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsStreamPaused(false);
-                      setStreamProgress(100);
-                    }}
-                    className="px-2.5 py-1 rounded-lg border border-[#354b6d] bg-[#162133] hover:border-[#53d6ab] text-[#53d6ab] font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                    onClick={() => setLayerFilter('DYNAMIC_ONLY')}
+                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                      layerFilter === 'DYNAMIC_ONLY'
+                        ? 'bg-[#53d6ab] text-[#0c1018]'
+                        : 'text-[#53d6ab] hover:bg-[#53d6ab]/10'
+                    }`}
                   >
-                    <FastForward size={12} />
-                    <span>Complete Stream (100%)</span>
+                    Dynamic LLM
                   </button>
-                ) : (
                   <button
                     type="button"
-                    onClick={() => setRoleStreamTrigger((c) => c + 1)}
-                    className="px-2.5 py-1 rounded-lg border border-[#354b6d] bg-[#162133] hover:border-[#ff8a4c] text-[#ffa875] font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                    onClick={() => setLayerFilter('STATIC_ONLY')}
+                    className={`px-2 py-1 rounded-md text-[11px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+                      layerFilter === 'STATIC_ONLY'
+                        ? 'bg-[#8caef9] text-[#0c1018]'
+                        : 'text-[#8caef9] hover:bg-[#8caef9]/10'
+                    }`}
                   >
-                    <RotateCcw size={12} />
-                    <span>Replay Live Stream</span>
+                    Static Policy
                   </button>
-                )}
-                <span className="font-extrabold text-[#53d6ab] tabular-nums">{progressPct}%</span>
-              </div>
-            </div>
-
-            {/* Live Progress Bar with Milestone Markers (18%, 45%, 75%, 100%) */}
-            <div className="w-full h-2.5 rounded-full bg-[#090d14] overflow-hidden border border-[#223046]">
-              <div
-                className="h-full bg-gradient-to-r from-[#ff8a4c] to-[#53d6ab] transition-all duration-150"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-
-            {/* Streaming Sub-Step Execution Log */}
-            <div className="rounded-xl bg-[#090e17] border border-[#1f2c40] p-3 font-mono text-xs space-y-1.5">
-              {isStageExecuting ? (
-                <div className="flex items-center gap-2 text-[#ffa875]">
-                  <Loader2 size={14} className="animate-spin" />
-                  <span>{executingStageLabel || `Executing ${activeRoleMeta.roleId}...`}</span>
                 </div>
-              ) : (
-                activeRoleMeta.steps.map((line, idx) => {
-                  const isVisible = revealStep >= idx + 1;
-                  const isCurrentStep = revealStep === idx;
-                  if (!isVisible && !isCurrentStep) return null;
-                  return (
-                    <div
-                      key={idx}
-                      className={`flex items-start gap-2 ${
-                        isVisible ? 'text-[#dce3ef]' : 'text-[#ffa875]'
-                      }`}
-                    >
-                      <span className="text-[#53d6ab] font-bold shrink-0">
-                        {isVisible ? '✓' : '▸'} [Step {currentStage + 1}.{idx + 1}]
-                      </span>
-                      <span>{line}</span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
 
-          {/* =========================================================
-              LIVE ROLE LOGS CONSOLE PANE (REAL-TIME RAW MODEL STREAM)
-              Streams raw model output token-by-token from each worker
-              as it happens, synchronized with progressive stage cards!
-             ========================================================= */}
-          <div className="mb-4 rounded-2xl border border-[#385176] bg-[#0b1019] overflow-hidden shadow-xl">
-            {/* Console Header Bar */}
-            <div className="px-4 py-2.5 bg-[#121c2c] border-b border-[#25354d] flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#53d6ab]/15 border border-[#53d6ab]/45 text-[#53d6ab] font-extrabold">
-                  <Terminal size={13} />
-                  <span>LIVE ROLE LOGS</span>
-                </span>
-                <span className="text-white font-bold">
-                  Real-Time Raw Model Stream ({workerTelemetries.length} Active Worker Logs)
-                </span>
-                {streamProgress < 100 || isStageExecuting ? (
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#ff8a4c]/20 text-[#ffa875] border border-[#ff8a4c]/40 font-bold text-[11px]">
-                    <span className="w-2 h-2 rounded-full bg-[#ff8a4c] animate-ping" />
-                    <span>STREAMING RAW TOKENS...</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#162336] text-[#8caef9] text-[11px] tabular-nums">
-                    <span>✓ STREAM COMPLETE ({primaryStream.totalTokens} tokens)</span>
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                <button
-                  type="button"
-                  onClick={() => setShowSystemPromptInLogs((s) => !s)}
-                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
-                    showSystemPromptInLogs
-                      ? 'border-[#8caef9] bg-[#8caef9]/20 text-[#8caef9]'
-                      : 'border-[#2c3e5a] bg-[#0e1624] text-[#a2afc3] hover:text-white'
-                  }`}
-                >
-                  <Eye size={12} />
-                  <span>{showSystemPromptInLogs ? 'Hide System Prompt' : 'Show System Prompt'}</span>
-                </button>
                 <button
                   type="button"
                   onClick={() => setShowLiveRoleLogs((s) => !s)}
-                  className="px-2.5 py-1 rounded-lg border border-[#2c3e5a] bg-[#0e1624] hover:border-[#8caef9] text-[#c8d3e2] text-[11px] font-bold cursor-pointer whitespace-nowrap shrink-0"
+                  className="px-2.5 py-1 rounded-lg border border-[#2c3e5a] bg-[#0d1522] hover:border-[#8caef9] text-[#8caef9] text-[11px] font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
                 >
-                  {showLiveRoleLogs ? 'Collapse Console ▲' : 'Expand Live Console ▼'}
+                  <Terminal size={12} />
+                  <span>
+                    {showLiveRoleLogs
+                      ? 'Hide Stage Stream ▲'
+                      : `Inspect Stage Stream (${primaryStream.totalTokens} tok) ▼`}
+                  </span>
                 </button>
               </div>
             </div>
 
             {showLiveRoleLogs && (
-              <div className="p-3.5 space-y-3">
-                {/* Worker Role Stream Filter Tabs */}
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1d2a3f] pb-2.5">
+              <div className="pt-2 border-t border-[#1d2a3f] space-y-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
                     <button
                       type="button"
@@ -1194,24 +1155,6 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
             )}
           </div>
 
-          {/* Initial Stream Handshake Banner when revealStep === 0 */}
-          {revealStep === 0 && (
-            <div className="mb-4 rounded-2xl border border-dashed border-[#ff8a4c]/50 bg-[#111927] p-5 flex items-center justify-between gap-4 font-mono text-xs">
-              <div className="flex items-center gap-3">
-                <Loader2 size={18} className="animate-spin text-[#ff8a4c] shrink-0" />
-                <div>
-                  <div className="text-white font-bold">
-                    Streaming raw model tokens from {activeRoleMeta.roleId} ({activeRoleMeta.modelAssigned})...
-                  </div>
-                  <div className="text-[#a2afc3] mt-0.5">
-                    Stage result cards below unlock progressively as the Live Role Logs stream crosses each generation milestone.
-                  </div>
-                </div>
-              </div>
-              <span className="text-[#ffa875] font-extrabold tabular-nums">{progressPct}%</span>
-            </div>
-          )}
-
           {/* =========================================================
               STEP 1: UNDERSTAND (PROGRESSIVE REVEAL BY WORKER-S1-INTAKE)
              ========================================================= */}
@@ -1281,28 +1224,6 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                       ))}
                     </div>
                   </article>
-                </div>
-
-                {/* Fast-Track to Step 3 Code Callout */}
-                <div className="rounded-xl border border-[#53d6ab]/45 bg-[#0e1724] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#53d6ab]">
-                      <Zap size={14} className="text-[#ff8a4c]" />
-                      <span>LOOKING FOR THE GENERATED CODE?</span>
-                    </div>
-                    <p className="text-xs text-[#c8d3e2]">
-                      Code synthesis is performed by Worker A & B in <strong>Step 3</strong>. Select an option below or auto-advance directly to the code:
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={isStageExecuting}
-                    onClick={() => onAutoAdvanceToStage3?.()}
-                    className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md shrink-0"
-                  >
-                    <Zap size={14} />
-                    <span>Auto-Advance to Step 3 (Inspect Code) ➔</span>
-                  </button>
                 </div>
 
                 {/* Single Blocking Architectural Gate Card */}
@@ -1380,44 +1301,25 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                       </pre>
                       <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-[#1e2a3b]">
                         <span className="text-xs text-[#53d6ab] font-bold">
-                          TaskSpec locked. Proceed to generate Plan or Code:
+                          Step 1 Gate Resolved! Proceed in order to Step 2 (Architect &amp; Planner Role):
                         </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={isStageExecuting}
-                            onClick={() => onAdvanceToStageWithLiveWorker(1)}
-                            className="px-3.5 py-1.5 rounded-lg bg-[#223348] hover:bg-[#2c4059] text-white font-mono text-xs font-bold cursor-pointer"
-                          >
-                            <span>Next: Step 2 Plan →</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isStageExecuting}
-                            onClick={() => onAutoAdvanceToStage3?.()}
-                            className="px-4 py-1.5 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1 cursor-pointer shadow-md"
-                          >
-                            <Zap size={13} />
-                            <span>Jump to Step 3 Code ➔</span>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          disabled={isStageExecuting}
+                          onClick={() => onAdvanceToStageWithLiveWorker(1)}
+                          className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-md"
+                        >
+                          <Play size={13} />
+                          <span>Proceed to Step 2: Run Architect Role (S1 → S2) →</span>
+                        </button>
                       </div>
                     </div>
                   ) : (
                     <div className="rounded-xl border border-[#ff8a4c]/40 bg-[#0d131d] p-3 font-mono text-xs text-[#ffa875] flex flex-wrap items-center justify-between gap-2">
                       <span>
                         Select option <strong>{gate.options[0]?.id}</strong> above to compile the locked{' '}
-                        <code>TaskSpec</code>.
+                        <code>TaskSpec</code> and unlock Step 2.
                       </span>
-                      <button
-                        type="button"
-                        disabled={isStageExecuting}
-                        onClick={() => onAutoAdvanceToStage3?.()}
-                        className="px-3 py-1 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-1 cursor-pointer"
-                      >
-                        <Zap size={12} />
-                        <span>Auto-Advance to Step 3 Code ➔</span>
-                      </button>
                     </div>
                   )}
                 </article>
@@ -1429,123 +1331,108 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
              ========================================================= */}
           {currentStage === 1 && (
             <div className="space-y-4">
-              {revealStep >= 1 && (
-                <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-mono text-[10px]">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#53d6ab]/20 text-[#53d6ab] font-extrabold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
-                      ⚡ DYNAMIC REQUIREMENT REDUCTION ({coderModel})
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#8caef9]/20 text-[#8caef9] font-extrabold">
-                      <Shield size={11} />
-                      🔒 STATIC POLICY INJECTION (POL-2026-v1)
-                    </span>
-                  </div>
-                  <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
-                    WORKER-S2-ARCHITECT ({coderModel}) · PROGRESSIVE REQUIREMENT SYNTHESIS (R1–R8)
-                  </div>
-                  <div className="mt-3 grid grid-cols-1 md:grid-cols-11 gap-3 items-center">
-                    <div className={`md:col-span-6 rounded-xl border border-[#2b3a4f] bg-[#121b28] p-4 ${layerFilter === 'STATIC_ONLY' ? 'opacity-30' : ''}`}>
-                      <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#53d6ab]/15 text-[#53d6ab] font-mono text-[9px] font-bold mb-1">
-                        ⚡ DYNAMIC SYNTHESIS
-                      </div>
-                      <span className="font-mono text-xs font-bold text-[#8caef9] block">
-                        DEVELOPER & REPO SPEC (R1–R7)
-                      </span>
-                      <h4 className="mt-1 font-bold text-sm text-white">
-                        {activeScenario.title} Functional & Schema Contracts
-                      </h4>
-                      <div className="mt-2 space-y-1.5 text-xs text-[#dce3ef]">
-                        {activeScenario.requirements
-                          .slice(0, revealStep >= 2 ? 7 : 4)
-                          .map((r) => (
-                            <div key={r.id} className="truncate">
-                              <strong className="font-mono text-[#8caef9]">{r.id}:</strong>{' '}
-                              {r.statement}
-                            </div>
-                          ))}
-                      </div>
+              <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2 font-mono text-[10px]">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#53d6ab]/20 text-[#53d6ab] font-extrabold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
+                    ⚡ DYNAMIC REQUIREMENT REDUCTION ({coderModel})
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#8caef9]/20 text-[#8caef9] font-extrabold">
+                    <Shield size={11} />
+                    🔒 STATIC POLICY INJECTION (POL-2026-v1)
+                  </span>
+                </div>
+                <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
+                  WORKER-S2-ARCHITECT ({coderModel}) · PROGRESSIVE REQUIREMENT SYNTHESIS (R1–R8)
+                </div>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-11 gap-3 items-center">
+                  <div className={`md:col-span-6 rounded-xl border border-[#2b3a4f] bg-[#121b28] p-4 ${layerFilter === 'STATIC_ONLY' ? 'opacity-30' : ''}`}>
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#53d6ab]/15 text-[#53d6ab] font-mono text-[9px] font-bold mb-1">
+                      ⚡ DYNAMIC SYNTHESIS
                     </div>
-
-                    <div className="md:col-span-1 text-center font-mono text-2xl font-extrabold text-[#ff8a4c]">
-                      +
+                    <span className="font-mono text-xs font-bold text-[#8caef9] block">
+                      DEVELOPER & REPO SPEC (R1–R7)
+                    </span>
+                    <h4 className="mt-1 font-bold text-sm text-white">
+                      {activeScenario.title} Functional & Schema Contracts
+                    </h4>
+                    <div className="mt-2 space-y-1.5 text-xs text-[#dce3ef]">
+                      {activeScenario.requirements.slice(0, 7).map((r) => (
+                        <div key={r.id} className="truncate">
+                          <strong className="font-mono text-[#8caef9]">{r.id}:</strong>{' '}
+                          {r.statement}
+                        </div>
+                      ))}
                     </div>
+                  </div>
 
-                    <div className={`md:col-span-4 rounded-xl border border-[#ff8a4c]/50 bg-[#ff8a4c]/10 p-4 ${layerFilter === 'DYNAMIC_ONLY' ? 'opacity-30' : ''}`}>
-                      <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#8caef9]/20 text-[#8caef9] font-mono text-[9px] font-bold mb-1">
-                        🔒 STATIC POLICY CONTRACT
+                  <div className="md:col-span-1 text-center font-mono text-2xl font-extrabold text-[#ff8a4c]">
+                    +
+                  </div>
+
+                  <div className={`md:col-span-4 rounded-xl border border-[#ff8a4c]/50 bg-[#ff8a4c]/10 p-4 ${layerFilter === 'DYNAMIC_ONLY' ? 'opacity-30' : ''}`}>
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-[#8caef9]/20 text-[#8caef9] font-mono text-[9px] font-bold mb-1">
+                      🔒 STATIC POLICY CONTRACT
+                    </div>
+                    <span className="font-mono text-xs font-bold text-[#ffa875] block">
+                      RUNTIME POLICY INJECTION ({failedReq.id})
+                    </span>
+                    <h4 className="mt-1 font-bold text-sm text-white">
+                      Mandatory {failedReq.category} Gate
+                    </h4>
+                    <p className="mt-1 text-xs text-[#dce3ef] leading-relaxed">
+                      {failedReq.statement}
+                    </p>
+                  </div>
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
+                <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
+                  ARCHITECTURAL DECISION RECORDS (ADRs) SYNTHESIZED BY WORKER-S2-ARCHITECT ({coderModel})
+                </div>
+                <div className="mt-3 space-y-2.5">
+                  {activeScenario.decisions.map((d) => (
+                    <div
+                      key={d.id}
+                      className="rounded-xl border border-[#2b374a] bg-[#121a26] p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <div className="font-mono text-xs text-[#8caef9]">
+                            {d.id} · {d.stage}
+                          </div>
+                          <b className="text-sm text-white block mt-0.5">{d.title}</b>
+                          <span className="text-xs text-[#53d6ab] font-mono">
+                            Chosen: {d.chosenOption}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleWhy(d.id)}
+                          aria-expanded={!!openWhyIds[d.id]}
+                          className="px-3 py-1.5 rounded-lg border border-[#2b3d5b] bg-[#0b172a] hover:border-[#ff8a4c] text-xs font-bold text-[#c8d3e2] transition-colors cursor-pointer"
+                        >
+                          {openWhyIds[d.id] ? 'Hide Rationale' : 'Why? (Rationale)'}
+                        </button>
                       </div>
-                      <span className="font-mono text-xs font-bold text-[#ffa875] block">
-                        RUNTIME POLICY INJECTION ({failedReq.id})
-                      </span>
-                      {revealStep >= 2 ? (
-                        <>
-                          <h4 className="mt-1 font-bold text-sm text-white">
-                            Mandatory {failedReq.category} Gate
-                          </h4>
-                          <p className="mt-1 text-xs text-[#dce3ef] leading-relaxed">
-                            {failedReq.statement}
+                      {openWhyIds[d.id] && (
+                        <div className="mt-3 pt-3 border-t border-[#283345] text-xs space-y-1.5">
+                          <div className="text-[#fb8797] font-mono">
+                            <strong>Rejected Alternative:</strong> {d.rejectedAlternative}
+                          </div>
+                          <p className="text-[#dce3ef] leading-relaxed">
+                            <strong>Engineering Rationale:</strong> {d.rationale}
                           </p>
-                        </>
-                      ) : (
-                        <div className="mt-2 font-mono text-xs text-[#ffa875] flex items-center gap-2">
-                          <Loader2 size={14} className="animate-spin" />
-                          <span>Injecting Tier 2 Policy Gate (R8)...</span>
+                          <div className="text-[#ffa875] font-mono">
+                            <strong>Locked AST Constraint:</strong> {d.constraintLocked}
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-                </article>
-              )}
-
-              {revealStep >= 3 && (
-                <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5">
-                  <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
-                    ARCHITECTURAL DECISION RECORDS (ADRs) SYNTHESIZED BY WORKER-S2-ARCHITECT ({coderModel})
-                  </div>
-                  <div className="mt-3 space-y-2.5">
-                    {activeScenario.decisions.map((d) => (
-                      <div
-                        key={d.id}
-                        className="rounded-xl border border-[#2b374a] bg-[#121a26] p-4"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div>
-                            <div className="font-mono text-xs text-[#8caef9]">
-                              {d.id} · {d.stage}
-                            </div>
-                            <b className="text-sm text-white block mt-0.5">{d.title}</b>
-                            <span className="text-xs text-[#53d6ab] font-mono">
-                              Chosen: {d.chosenOption}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => toggleWhy(d.id)}
-                            aria-expanded={!!openWhyIds[d.id]}
-                            className="px-3 py-1.5 rounded-lg border border-[#2b3d5b] bg-[#0b172a] hover:border-[#ff8a4c] text-xs font-bold text-[#c8d3e2] transition-colors cursor-pointer"
-                          >
-                            {openWhyIds[d.id] ? 'Hide Rationale' : 'Why? (Rationale)'}
-                          </button>
-                        </div>
-                        {openWhyIds[d.id] && (
-                          <div className="mt-3 pt-3 border-t border-[#283345] text-xs space-y-1.5">
-                            <div className="text-[#fb8797] font-mono">
-                              <strong>Rejected Alternative:</strong> {d.rejectedAlternative}
-                            </div>
-                            <p className="text-[#dce3ef] leading-relaxed">
-                              <strong>Engineering Rationale:</strong> {d.rationale}
-                            </p>
-                            <div className="text-[#ffa875] font-mono">
-                              <strong>Locked AST Constraint:</strong> {d.constraintLocked}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </article>
-              )}
+                  ))}
+                </div>
+              </article>
 
               {/* Direct Action to Generate Step 3 Code */}
               <div className="rounded-xl border border-[#ff8a4c]/50 bg-[#121c2c] p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
@@ -1697,69 +1584,66 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
             <div className="space-y-4">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#53d6ab]/20 text-[#53d6ab] font-mono text-[11px] font-extrabold">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#53d6ab] animate-pulse" />
-                ⚡ DYNAMIC · LIVE VERIFICATION ORACLE & SURGICAL AST PATCH ({verifierModel} → {coderModel})
+                DYNAMIC · LIVE VERIFICATION ORACLE &amp; SURGICAL AST PATCH ({verifierModel} → {coderModel})
               </div>
-              {revealStep >= 1 && (
-                <div className="adaptive-four grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
-                    <span className="block text-xs text-[#a2afc3]">Role 3B Test Suite</span>
-                    <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#53d6ab]">
-                      8 / 8 ✓
-                    </b>
-                    <small className="block mt-1 text-xs text-[#94a3ba]">
-                      Independent test suite active.
-                    </small>
-                  </article>
+              <div className="adaptive-four grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
+                  <span className="block text-xs text-[#a2afc3]">Role 3B Test Suite</span>
+                  <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#53d6ab]">
+                    8 / 8 ✓
+                  </b>
+                  <small className="block mt-1 text-xs text-[#94a3ba]">
+                    Independent test suite active.
+                  </small>
+                </article>
 
-                  <article
-                    className={`rounded-xl border p-3.5 ${
-                      repaired
-                        ? 'border-[#53d6ab]/45 bg-[#131b28]'
-                        : 'border-[#fb8797]/50 bg-[#fb8797]/10'
+                <article
+                  className={`rounded-xl border p-3.5 ${
+                    repaired
+                      ? 'border-[#53d6ab]/45 bg-[#131b28]'
+                      : 'border-[#fb8797]/50 bg-[#fb8797]/10'
+                  }`}
+                >
+                  <span className="block text-xs text-[#dce3ef]">
+                    Role 4A Oracle ({verifierModel})
+                  </span>
+                  <b
+                    className={`block mt-1.5 text-lg font-mono font-extrabold ${
+                      repaired ? 'text-[#53d6ab]' : 'text-[#fb8797]'
                     }`}
                   >
-                    <span className="block text-xs text-[#dce3ef]">
-                      Role 4A Oracle ({verifierModel})
-                    </span>
-                    <b
-                      className={`block mt-1.5 text-lg font-mono font-extrabold ${
-                        repaired ? 'text-[#53d6ab]' : 'text-[#fb8797]'
-                      }`}
-                    >
-                      {repaired ? '8 / 8 ✓' : revealStep >= 3 ? '7 / 8 ✕' : 'Auditing...'}
-                    </b>
-                    <small className="block mt-1 text-xs text-[#c8d3e2]">
-                      {repaired
-                        ? 'All 8 assertions pass on v1.1.'
-                        : `Blocked on ${failedReq.id} (${failedReq.category}).`}
-                    </small>
-                  </article>
+                    {repaired ? '8 / 8 ✓' : '7 / 8 ✕'}
+                  </b>
+                  <small className="block mt-1 text-xs text-[#c8d3e2]">
+                    {repaired
+                      ? 'All 8 assertions pass on v1.1.'
+                      : `Blocked on ${failedReq.id} (${failedReq.category}).`}
+                  </small>
+                </article>
 
-                  <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
-                    <span className="block text-xs text-[#a2afc3]">Retained Checkpoint</span>
-                    <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#8caef9]">
-                      {repaired ? '#S3-01-v1.1' : '#S3-01'}
-                    </b>
-                    <small className="block mt-1 text-xs text-[#94a3ba]">
-                      {activeScenario.surgicalDiff.untouchedFilesCount} file(s) untouched.
-                    </small>
-                  </article>
+                <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
+                  <span className="block text-xs text-[#a2afc3]">Retained Checkpoint</span>
+                  <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#8caef9]">
+                    {repaired ? '#S3-01-v1.1' : '#S3-01'}
+                  </b>
+                  <small className="block mt-1 text-xs text-[#94a3ba]">
+                    {activeScenario.surgicalDiff.untouchedFilesCount} file(s) untouched.
+                  </small>
+                </article>
 
-                  <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
-                    <span className="block text-xs text-[#a2afc3]">Provenance Evidence</span>
-                    <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#53d6ab]">
-                      {repaired ? '11 / 13 ✓' : '9 / 13 ✓'}
-                    </b>
-                    <small className="block mt-1 text-xs text-[#94a3ba]">
-                      Recorded in persistent ledger.
-                    </small>
-                  </article>
-                </div>
-              )}
+                <article className="rounded-xl border border-[#53d6ab]/35 bg-[#131b28] p-3.5">
+                  <span className="block text-xs text-[#a2afc3]">Provenance Evidence</span>
+                  <b className="block mt-1.5 text-lg font-mono font-extrabold text-[#53d6ab]">
+                    {repaired ? '11 / 13 ✓' : '9 / 13 ✓'}
+                  </b>
+                  <small className="block mt-1 text-xs text-[#94a3ba]">
+                    Recorded in persistent ledger.
+                  </small>
+                </article>
+              </div>
 
-              {/* Full 8-Row Requirement Verification Table (Reveals rows progressively as Oracle Role audits R1..R8) */}
-              {revealStep >= 1 && (
-                <div className="rounded-2xl border border-[#2b3546] bg-[#151c28] overflow-hidden">
+              {/* Full 8-Row Requirement Verification Table */}
+              <div className="rounded-2xl border border-[#2b3546] bg-[#151c28] overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setShowProofTrace(!showProofTrace)}
@@ -1827,7 +1711,6 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     </div>
                   )}
                 </div>
-              )}
 
               {/* Gate Failure Diagnostic OR Verified Surgical AST Diff */}
               <>
@@ -1945,25 +1828,33 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ff8a4c] animate-pulse" />
                 ⚡ DYNAMIC · LIVE WEBCRYPTO SHA-256 SEAL & KNOWLEDGE EXTRACTOR
               </div>
-              {revealStep >= 1 && (
-                <article className="rounded-2xl border border-[#53d6ab]/50 bg-gradient-to-r from-[#53d6ab]/15 to-[#151c28] p-5 flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <div className="font-mono text-xs font-bold tracking-widest text-[#53d6ab]">
-                      CRYPTOGRAPHIC VERIFICATION SEAL ISSUED BY WORKER-S5 ({sealId})
-                    </div>
-                    <h3 className="mt-1 text-xl font-extrabold text-white">
-                      {activeScenario.title} — Verified Complete (8/8 Checks · 13/13 Evidence)
-                    </h3>
-                    <p className="mt-1 text-xs text-[#c8d3e2]">
-                      Checkpoint <code className="font-mono text-[#53d6ab]">#S3-01-v1.1</code> (
-                      {checkpointHash}) signed and pattern{' '}
-                      <code className="font-mono text-[#ffa875]">
-                        {activeScenario.extractedKnowledge.id}
-                      </code>{' '}
-                      promoted to Tier 3 Knowledge Graph.
-                    </p>
+              <article className="rounded-2xl border border-[#53d6ab]/50 bg-gradient-to-r from-[#53d6ab]/15 to-[#151c28] p-5 flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <div className="font-mono text-xs font-bold tracking-widest text-[#53d6ab]">
+                    CRYPTOGRAPHIC VERIFICATION SEAL ISSUED BY WORKER-S5 ({sealId})
                   </div>
+                  <h3 className="mt-1 text-xl font-extrabold text-white">
+                    {activeScenario.title} — Verified Complete (8/8 Checks · 13/13 Evidence)
+                  </h3>
+                  <p className="mt-1 text-xs text-[#c8d3e2]">
+                    Checkpoint <code className="font-mono text-[#53d6ab]">#S3-01-v1.1</code> (
+                    {checkpointHash}) signed and pattern{' '}
+                    <code className="font-mono text-[#ffa875]">
+                      {activeScenario.extractedKnowledge.id}
+                    </code>{' '}
+                    promoted to Tier 3 Knowledge Graph.
+                  </p>
+                </div>
 
+                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
+                    className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold text-xs flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
+                  >
+                    <Eye size={15} />
+                    <span>Open Interactive Result Preview &amp; Download (HTML / ZIP) ➔</span>
+                  </button>
                   <button
                     type="button"
                     onClick={onOpenKnowledgeTab}
@@ -1972,8 +1863,8 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                     <Sparkles size={15} />
                     <span>Inspect Promoted Tier 3 Knowledge Unit →</span>
                   </button>
-                </article>
-              )}
+                </div>
+              </article>
 
               {/* Interactive Sandbox Execution Probe */}
               <article className="rounded-2xl border border-[#2b3546] bg-[#151c28] p-5 space-y-4">
