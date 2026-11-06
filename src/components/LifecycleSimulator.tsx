@@ -59,6 +59,7 @@ interface LifecycleSimulatorProps {
   onApplySurgicalRepairWithLiveWorker: () => void;
   onAutoAdvanceToStage3?: () => void;
   onAutoRunFullPipelineLive?: (promptToRun?: string) => void;
+  onOpenResultPreview?: (promptToRun?: string) => void;
   onToggleRepair: (repaired: boolean) => void;
   onFocusComponent: (componentId: string) => void;
   onChangeDependencyFilter: (filter: DependencyCategory | 'all') => void;
@@ -95,12 +96,13 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
   onApplySurgicalRepairWithLiveWorker,
   onAutoAdvanceToStage3,
   onAutoRunFullPipelineLive,
+  onOpenResultPreview,
   onToggleRepair,
   onFocusComponent,
   onChangeDependencyFilter,
   onOpenKnowledgeTab
 }) => {
-  const [idlePromptInput, setIdlePromptInput] = useState<string>('');
+  const [idlePromptInput, setIdlePromptInput] = useState<string>('i need landing-page for my site');
   const [openWhyIds, setOpenWhyIds] = useState<Record<string, boolean>>({
     'ADR-101': true,
     'ADR-LIVE-MODEL': true
@@ -387,6 +389,19 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   <Zap size={17} />
                   <span>Auto-Run All 5 Steps to Code ⚡</span>
                 </button>
+                <button
+                  type="button"
+                  data-testid="s0-open-result-btn"
+                  disabled={isStageExecuting}
+                  onClick={() => {
+                    onOpenResultPreview?.(idlePromptInput.trim() || 'i need landing-page for my site');
+                  }}
+                  className="px-5 py-3.5 rounded-xl bg-[#8caef9] hover:bg-[#a6c1fa] disabled:opacity-50 text-[#0c1018] font-mono text-sm font-extrabold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
+                  title="Immediately open the rendered live preview and download standalone HTML or ZIP"
+                >
+                  <Eye size={17} />
+                  <span>Open Live Result &amp; Download (HTML / ZIP) ➔</span>
+                </button>
               </div>
             </div>
           </form>
@@ -661,6 +676,40 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
 
   return (
     <div className="lifecycle-workspace">
+      {/* Persistent Deliverable Result Banner across all stages */}
+      <div className="mb-4 rounded-2xl border-2 border-[#ff8a4c]/60 bg-gradient-to-r from-[#ff8a4c]/15 via-[#131c2b] to-[#53d6ab]/15 p-4 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 font-mono text-xs font-extrabold text-[#ff8a4c]">
+            <Eye size={15} className="text-[#53d6ab]" />
+            <span>FINAL DELIVERABLE RESULT READY FOR: &ldquo;{activeScenario.rawPrompt}&rdquo;</span>
+          </div>
+          <p className="text-xs text-[#c8d3e2]">
+            View the <strong>Live Interactive Landing Page Preview</strong>, copy the verified React/TypeScript files, or download a ready-to-use <strong>standalone index.html</strong> &amp; <strong>project .zip</strong>:
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            data-testid="banner-open-result-btn"
+            onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
+            className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-lg transition-all"
+          >
+            <Eye size={15} />
+            <span>Open Live Result Preview &amp; Download (HTML / ZIP) ➔</span>
+          </button>
+          {currentStage !== 2 && (
+            <button
+              type="button"
+              onClick={() => onAutoAdvanceToStage3?.()}
+              className="px-3.5 py-2.5 rounded-xl bg-[#151c28] hover:bg-[#1e293b] text-[#53d6ab] border border-[#53d6ab]/40 font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all"
+            >
+              <Code2 size={14} />
+              <span>Inspect Step 3 Source Code</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 5-Step Journey Stepper (Strictly Gated by Role Execution Order) */}
       <nav aria-label="Task journey" className="journey-stepper">
         {STEPPER_QUESTIONS.map((step, index) => {

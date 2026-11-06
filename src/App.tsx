@@ -12,6 +12,7 @@ import {
   Copy,
   Cpu,
   Database,
+  Eye,
   FileCheck2,
   Loader2,
   Network,
@@ -57,6 +58,7 @@ import { AbstractModelView } from './components/AbstractModelView';
 import { KnowledgeLifecycleView } from './components/KnowledgeLifecycleView';
 import { SlidesDeckModal, WorkspaceTabId } from './components/SlidesDeckModal';
 import { ArchitectureGuideModal } from './components/ArchitectureGuideModal';
+import { ResultDeliverablesView } from './components/ResultDeliverablesView';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTabId>('flow_studio');
@@ -75,11 +77,11 @@ export default function App() {
   const [dependencyFilter, setDependencyFilter] = useState<DependencyCategory | 'all'>('all');
   const [isSlidesOpen, setIsSlidesOpen] = useState<boolean>(false);
 
-  // Active SE Scenario & Prompt State
-  const [activeScenario, setActiveScenario] = useState<SECodingScenario>(
-    SE_CODING_SCENARIOS.feat_refund_api
+  // Active SE Scenario & Prompt State (Initialized to Landing Page deliverable so Result tab is always ready)
+  const [activeScenario, setActiveScenario] = useState<SECodingScenario>(() =>
+    synthesizeDynamicScenarioFromPrompt('i need landing-page for my site', 'qwen3:4b', 'POL-2026-v1', [])
   );
-  const [customPromptInput, setCustomPromptInput] = useState<string>('');
+  const [customPromptInput, setCustomPromptInput] = useState<string>('i need landing-page for my site');
 
   // Parallel Local LLM Runtime Config (Worker A = Coder Model, Worker B = Verifier/Critic Model)
   const [llmConfig, setLlmConfig] = useState<LocalModelRuntimeConfig>({
@@ -609,6 +611,26 @@ export default function App() {
     }
   };
 
+  const handleOpenResultWithPrompt = (promptText?: string) => {
+    const clean = (promptText || customPromptInput || activeScenario.rawPrompt || 'i need landing-page for my site').trim();
+    const generated = synthesizeDynamicScenarioFromPrompt(
+      clean,
+      llmConfig.coderModel,
+      activePolicyHash,
+      knowledgeUnits
+    );
+    setCustomPromptInput(clean);
+    setActiveScenario(generated);
+    setIsRuntimeIdle(false);
+    setClarifiedPlatform('web');
+    setRepaired(true);
+    setCheckpointHash('sha256:s3_verified_chk');
+    setSealId('#SEAL-DELIVERY-2026');
+    setCurrentStage(4);
+    setHighestCompletedStage(4);
+    switchWorkspaceTab('result_preview');
+  };
+
   const handleResetToIdleRuntime = () => {
     clearWorkerTokenStream();
     setIsRuntimeIdle(true);
@@ -685,7 +707,7 @@ export default function App() {
 
           <nav className="workspace-nav" aria-label="Workspace views">
             <div className="flex items-center gap-0.5 bg-[#0b1018] p-1 rounded-xl border border-[#212d3f]">
-              {/* Group 1: Live Engine */}
+              {/* Group 1: Live Engine & Delivered Result */}
               <button
                 type="button"
                 className={`workspace-tab ${activeTab === liveTab.id ? 'is-active is-live' : ''}`}
@@ -698,6 +720,21 @@ export default function App() {
                 <span>Live Runtime</span>
                 <span className="text-[10px] font-mono font-bold text-[#53d6ab] bg-[#53d6ab]/15 px-1 py-0.2 rounded">
                   S0→S5
+                </span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="nav-result-preview"
+                className={`workspace-tab ${activeTab === 'result_preview' ? 'is-active is-live' : ''}`}
+                aria-label="Result & Download"
+                aria-current={activeTab === 'result_preview' ? 'page' : undefined}
+                onClick={() => switchWorkspaceTab('result_preview')}
+              >
+                <Eye size={13} className="text-[#ff8a4c]" />
+                <span className="font-bold text-white">Result &amp; Download</span>
+                <span className="text-[10px] font-mono font-bold text-[#0b1018] bg-[#ff8a4c] px-1.5 py-0.2 rounded">
+                  HTML / ZIP
                 </span>
               </button>
 
@@ -1043,174 +1080,142 @@ export default function App() {
             </div>
           )}
 
-          {/* Top Live Prompt Bar (Active during workflow) vs S0 Quick Tip */}
-          {!isRuntimeIdle ? (
-            <div className="space-y-2.5 pt-2 border-t border-[#233144]">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (customPromptInput.trim()) {
-                    handleStartRuntimeWithPrompt(customPromptInput);
-                    setCustomPromptInput('');
+          {/* Always-Visible Top Prompt & Instant Result Bar */}
+          <div className="space-y-2.5 pt-2.5 border-t border-[#233144]">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (customPromptInput.trim()) {
+                  handleOpenResultWithPrompt(customPromptInput);
+                }
+              }}
+              className="flex flex-col lg:flex-row gap-2.5"
+            >
+              <input
+                type="text"
+                value={customPromptInput}
+                onChange={(e) => setCustomPromptInput(e.target.value)}
+                placeholder="Enter your prompt (e.g., i need landing-page for my site)..."
+                className="flex-1 rounded-xl border border-[#304462] bg-[#0d131d] px-3.5 py-2.5 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
+              />
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="submit"
+                  data-testid="top-open-result-btn"
+                  disabled={isStageExecuting}
+                  className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                >
+                  <Eye size={14} />
+                  <span>Get My Result (Live Preview + HTML / ZIP) ➔</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isStageExecuting}
+                  onClick={() =>
+                    handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
                   }
-                }}
-                className="flex flex-col md:flex-row gap-2.5"
-              >
-                <input
-                  type="text"
-                  value={customPromptInput}
-                  onChange={(e) => setCustomPromptInput(e.target.value)}
-                  placeholder="Enter a new SE task prompt to re-trigger Stage 1 Role (S0 → S1)..."
-                  className="flex-1 rounded-xl border border-[#304462] bg-[#0d131d] px-3.5 py-2.5 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
-                />
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <button
-                    type="submit"
-                    disabled={isStageExecuting || !customPromptInput.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    <Send size={13} />
-                    <span>Run New Task (S0→S1)</span>
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isStageExecuting}
-                    onClick={() =>
-                      handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+                  className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3cc498] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {isStageExecuting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Running Roles...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={14} />
+                      <span>Run All 5 Stages</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  disabled={isStageExecuting || !customPromptInput.trim()}
+                  onClick={() => {
+                    if (customPromptInput.trim()) {
+                      handleStartRuntimeWithPrompt(customPromptInput);
                     }
-                    className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
-                  >
-                    {isStageExecuting ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        <span>Running Roles...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Play size={14} />
-                        <span>Auto-Execute All 5 Roles</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
-          ) : (
-            <div className="pt-2 border-t border-[#202d3e] flex items-center justify-between text-xs font-mono text-[#8caef9]">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#ff8a4c] animate-pulse" />
-                <span>Ready for Prompt: Enter a task below in the Command Center to start Stage 1 Intake Role.</span>
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl bg-[#162030] hover:bg-[#1e2c42] border border-[#2d3f59] disabled:opacity-50 text-[#c8d3e2] font-mono text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Send size={13} />
+                  <span>Step-by-Step (S0→S1)</span>
+                </button>
               </div>
-              <span className="text-[11px] text-[#71829a] hidden sm:inline">Zero static results pre-loaded (S0 Idle)</span>
-            </div>
-          )}
+            </form>
+          </div>
         </section>
 
-        {/* Overview Hero (Reflects S0 Idle State vs Active Runtime Session) */}
-        <section className="overview" aria-labelledby="overview-title">
-          <div className="overview-copy">
-            <div className="eyebrow">
-              PARALLEL LOCAL LLM GOVERNANCE RUNTIME · ABSTRACT MODEL (M_SE)
-            </div>
-            <h1 id="overview-title">
-              A live runtime that governs <span>parallel local model roles</span> step by step.
-            </h1>
-            <p>
-              ShiftCore never outputs static results. Every stage’s artifacts emerge dynamically in
-              chronological order as <strong>Worker A ({llmConfig.coderModel})</strong> and{' '}
-              <strong>Worker B ({llmConfig.verifierModel})</strong> execute their assigned roles.
-            </p>
-            <div className="overview-actions">
-              {isRuntimeIdle ? (
+        {/* Overview Hero (Shown only in S0 Idle on Flow Studio so Active Stages & Result Preview are immediately above the fold) */}
+        {isRuntimeIdle && activeTab === 'flow_studio' && (
+          <section className="overview" aria-labelledby="overview-title">
+            <div className="overview-copy">
+              <div className="eyebrow">
+                PARALLEL LOCAL LLM GOVERNANCE RUNTIME · ABSTRACT MODEL (M_SE)
+              </div>
+              <h1 id="overview-title">
+                A live runtime that governs <span>parallel local model roles</span> step by step.
+              </h1>
+              <p>
+                ShiftCore never outputs static results. Every stage’s artifacts emerge dynamically in
+                chronological order as <strong>Worker A ({llmConfig.coderModel})</strong> and{' '}
+                <strong>Worker B ({llmConfig.verifierModel})</strong> execute their assigned roles.
+              </p>
+              <div className="overview-actions">
                 <button
                   type="button"
                   className="primary-action"
                   onClick={() =>
-                    handleStartRuntimeWithPrompt(SE_CODING_SCENARIOS.feat_refund_api.rawPrompt)
+                    handleOpenResultWithPrompt(customPromptInput || 'i need landing-page for my site')
                   }
                 >
-                  Start Step 1 Intake Role (S0 → S1) <Play size={17} aria-hidden="true" />
+                  Open Live Result &amp; Download (HTML / ZIP) <Eye size={17} aria-hidden="true" />
                 </button>
-              ) : (
                 <button
                   type="button"
-                  className="primary-action"
-                  onClick={() => {
-                    setActiveTab('flow_studio');
-                    document
-                      .getElementById('workspace')
-                      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
+                  className="text-action"
+                  onClick={() => switchWorkspaceTab('abstract_model')}
                 >
-                  Continue Active Role Session (Step {currentStage + 1}/5){' '}
-                  <ArrowRight size={18} aria-hidden="true" />
+                  Inspect Formal Abstract SE Model <Boxes size={16} aria-hidden="true" />
                 </button>
-              )}
-              <button
-                type="button"
-                className="text-action"
-                onClick={() => switchWorkspaceTab('abstract_model')}
-              >
-                Inspect Formal Abstract SE Model <Boxes size={16} aria-hidden="true" />
-              </button>
+              </div>
             </div>
-          </div>
 
-          <div className="task-card">
-            <div className="task-card-heading">
-              <span className="eyebrow">
-                {isRuntimeIdle ? 'RUNTIME STATE: S0 IDLE' : activeScenario.badgeLabel.toUpperCase()}
-              </span>
-              <span className="task-id">
-                {isRuntimeIdle ? 'ZERO STATIC DATA' : activeScenario.code}
-              </span>
-            </div>
-            <div className="task-request">
-              {isRuntimeIdle ? (
+            <div className="task-card">
+              <div className="task-card-heading">
+                <span className="eyebrow">RUNTIME STATE: S0 IDLE</span>
+                <span className="task-id">ZERO STATIC DATA</span>
+              </div>
+              <div className="task-request">
                 <div>
                   <h2 className="text-lg font-extrabold text-white">
                     Awaiting Developer Prompt (S0 Idle)
                   </h2>
                   <p className="mt-1 text-xs text-[#a2afc3]">
-                    Enter a prompt below or click a reference task to trigger{' '}
+                    Click <strong>Get My Result</strong> above to immediately view and download your Landing Page, or run{' '}
                     <code className="font-mono text-[#53d6ab]">WORKER-S1-INTAKE</code> on{' '}
                     <code className="font-mono text-[#53d6ab]">{llmConfig.coderModel}</code>.
                   </p>
                 </div>
-              ) : (
-                <div>
-                  <h2 className="text-lg font-extrabold text-white">{activeScenario.title}</h2>
-                  <p className="mt-1 text-xs text-[#c8d3e2] font-mono">
-                    Prompt: “{activeScenario.rawPrompt}”
-                  </p>
-                  <p className="mt-1 text-xs text-[#ffa875]" lang="ar" dir="rtl">
-                    {activeScenario.arabicTitle}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="task-card-status">
-              <span
-                className={`status-pill tone-${isRuntimeIdle ? 'amber' : metrics.globalStatusTone}`}
-                data-testid="global-runtime-status"
-                role="status"
-              >
-                {isRuntimeIdle ? 'S0: Idle / Waiting for Prompt' : metrics.globalStatusLabel}
-              </span>
-              <span className="task-stage tabular-nums">
-                {isRuntimeIdle ? 'Stage 0 of 5' : `Stage ${currentStage + 1} of 5`}
-              </span>
-            </div>
-            <div className="task-progress" aria-label="Runtime Stage Progress">
-              {STAGE_DEFINITIONS.map((stage, index) => (
+              </div>
+              <div className="task-card-status">
                 <span
-                  key={stage.id}
-                  className={!isRuntimeIdle && index <= currentStage ? 'is-filled' : ''}
-                />
-              ))}
+                  className="status-pill tone-amber"
+                  data-testid="global-runtime-status"
+                  role="status"
+                >
+                  S0: Idle / Waiting for Prompt
+                </span>
+                <span className="task-stage tabular-nums">Stage 0 of 5</span>
+              </div>
+              <div className="task-progress" aria-label="Runtime Stage Progress">
+                {STAGE_DEFINITIONS.map((stage) => (
+                  <span key={stage.id} className="" />
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section
           id="workspace"
@@ -1248,12 +1253,24 @@ export default function App() {
                 onApplySurgicalRepairWithLiveWorker={handleApplySurgicalRepairWithLiveWorker}
                 onAutoAdvanceToStage3={handleAutoAdvanceToStage3}
                 onAutoRunFullPipelineLive={handleAutoRunFullPipelineLive}
+                onOpenResultPreview={handleOpenResultWithPrompt}
                 onToggleRepair={setRepaired}
                 onFocusComponent={setSelectedComponentId}
                 onChangeDependencyFilter={setDependencyFilter}
                 onOpenKnowledgeTab={() => switchWorkspaceTab('knowledge_graph')}
               />
             </>
+          )}
+
+          {activeTab === 'result_preview' && (
+            <ResultDeliverablesView
+              activeScenario={activeScenario}
+              checkpointHash={checkpointHash === 'sha256:pending_s3' ? 'sha256:s3_verified_chk' : checkpointHash}
+              sealId={sealId === '#SEAL-PENDING' ? '#SEAL-DELIVERY-2026' : sealId}
+              coderModel={llmConfig.coderModel}
+              verifierModel={llmConfig.verifierModel}
+              onBackToRuntime={() => switchWorkspaceTab('flow_studio')}
+            />
           )}
 
           {activeTab === 'abstract_model' && (

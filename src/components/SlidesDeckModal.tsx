@@ -11,6 +11,7 @@ import { StageIndex } from '../lib/runtimeEngine';
 
 export type WorkspaceTabId =
   | 'flow_studio'
+  | 'result_preview'
   | 'abstract_model'
   | 'architecture'
   | 'knowledge_graph'
