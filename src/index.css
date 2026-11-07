@@ -213,8 +213,8 @@
   .brand { font-size: 21px; }
   .brand-symbol { width: 32px; height: 32px; }
   .reset-button { margin-left: auto; min-height: 36px; font-size: 12px; padding: 6px 10px; }
-  .workspace-nav { order: 3; width: calc(100% + 40px); margin: 0 -20px; padding: 0 12px; gap: 0; }
-  .workspace-tab { flex: 1; min-height: 48px; padding: 0 8px; font-size: 12px; gap: 7px; white-space: nowrap; }
+  .workspace-nav { order: 3; width: calc(100% + 40px); margin: 0 -20px; padding: 0 12px; gap: 2px; overflow-x: auto; justify-content: flex-start; }
+  .workspace-tab { flex: 0 0 auto; min-height: 46px; padding: 0 8px; font-size: 11.5px; gap: 5px; white-space: nowrap; }
   .desktop-tab-label { display: none; }
   .mobile-tab-label { display: inline; }
   .workspace-tab.is-active::after { left: 8px; right: 8px; }
@@ -239,10 +239,10 @@
   .workspace-section-heading h2 { font-size: 18px; }
   .workspace-section-heading p { font-size: 12px; }
   .workspace-live { display: none; }
-  .journey-stepper { gap: 4px; padding: 12px 8px; }
-  .journey-step { flex-direction: column; justify-content: flex-start; text-align: center; gap: 7px; padding: 10px 2px; border-radius: 7px; }
-  .journey-number { width: 27px; height: 27px; font-size: 12px; border-radius: 7px; }
-  .journey-title { font-size: 12px; line-height: 1.6; }
+  .journey-stepper { gap: 4px; padding: 12px 6px; }
+  .journey-step { flex-direction: column; justify-content: flex-start; text-align: center; gap: 6px; padding: 9px 2px; border-radius: 7px; min-width: 0; }
+  .journey-number { width: 26px; height: 26px; font-size: 11.5px; border-radius: 7px; }
+  .journey-title { font-size: 10.5px; line-height: 1.35; letter-spacing: -0.2px; }
   .lifecycle-grid { padding: 18px 14px; gap: 24px; }
   .stage-heading h2 { font-size: 22px; }
   .stage-heading-kicker { font-size: 12px; letter-spacing: .4px; }

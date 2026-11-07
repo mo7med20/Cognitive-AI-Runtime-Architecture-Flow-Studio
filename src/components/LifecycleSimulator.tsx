@@ -755,16 +755,16 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {currentStage === 0 && clarifiedPlatform !== 'web' && (
             <button
               type="button"
               data-testid="step1-resolve-gate-btn"
               disabled={isStageExecuting}
               onClick={() => onSelectPlatformAndCompileStage2('web')}
-              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Check size={14} />
+              <Check size={14} className="shrink-0" />
               <span>1. Select Recommended Option &amp; Lock TaskSpec →</span>
             </button>
           )}
@@ -774,9 +774,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               data-testid="step1-to-step2-btn"
               disabled={isStageExecuting}
               onClick={() => onAdvanceToStageWithLiveWorker(1)}
-              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Play size={14} />
+              <Play size={14} className="shrink-0" />
               <span>Run Step 2: Architect &amp; Planner Role (S1 → S2) →</span>
             </button>
           )}
@@ -786,9 +786,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               data-testid="step2-to-step3-btn"
               disabled={isStageExecuting}
               onClick={() => onAdvanceToStageWithLiveWorker(2)}
-              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Code2 size={14} />
+              <Code2 size={14} className="shrink-0" />
               <span>Run Step 3: Parallel Coder ∥ Test Suite (S2 → S3) →</span>
             </button>
           )}
@@ -798,9 +798,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               data-testid="step3-to-step4-btn"
               disabled={isStageExecuting}
               onClick={() => onAdvanceToStageWithLiveWorker(3)}
-              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Shield size={14} />
+              <Shield size={14} className="shrink-0" />
               <span>Run Step 4: Verification Oracle Audit (S3 → S4) →</span>
             </button>
           )}
@@ -810,9 +810,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               data-testid="step4-repair-btn"
               disabled={isStageExecuting}
               onClick={onApplySurgicalRepairWithLiveWorker}
-              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Zap size={14} />
+              <Zap size={14} className="shrink-0" />
               <span>Run Role 4B: Apply Surgical AST Patch (v1.0 → v1.1) →</span>
             </button>
           )}
@@ -822,9 +822,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               data-testid="step4-to-step5-btn"
               disabled={isStageExecuting}
               onClick={() => onAdvanceToStageWithLiveWorker(4)}
-              className="px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#53d6ab] hover:bg-[#3cc498] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Sparkles size={14} />
+              <Sparkles size={14} className="shrink-0" />
               <span>Run Step 5: Issue Cryptographic Seal &amp; Result (S4 → S5) →</span>
             </button>
           )}
@@ -833,9 +833,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
               type="button"
               data-testid="step5-open-result-btn"
               onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
-              className="px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all whitespace-nowrap shrink-0"
+              className="w-full sm:w-auto justify-center px-4 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-mono text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md transition-all leading-snug"
             >
-              <Eye size={14} />
+              <Eye size={14} className="shrink-0" />
               <span>Open Live Result Preview &amp; Download (HTML / ZIP) ➔</span>
             </button>
           )}
@@ -1738,7 +1738,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                         </div>
                       </article>
 
-                      <article className="rounded-2xl border border-[#ff8a4c]/50 bg-gradient-to-r from-[#ff8a4c]/12 to-[#141c29] p-5 flex flex-wrap items-center justify-between gap-4">
+                      <article className="rounded-2xl border-2 border-[#ff8a4c]/60 bg-[#141c29] p-5 flex flex-wrap items-center justify-between gap-4 shadow-xl">
                         <div className="max-w-2xl">
                           <div className="font-mono text-xs font-bold tracking-widest text-[#ff8a4c]">
                             DISPATCH ROLE 4B: SURGICAL AST REPAIR WORKER ({coderModel}) ON #S3-01
@@ -1763,9 +1763,9 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                           type="button"
                           disabled={isStageExecuting}
                           onClick={onApplySurgicalRepairWithLiveWorker}
-                          className="px-5 py-3 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold text-sm flex items-center gap-2 transition-colors whitespace-nowrap shrink-0 shadow-lg cursor-pointer"
+                          className="w-full sm:w-auto justify-center px-5 py-3 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold text-sm flex items-center gap-2 transition-colors shadow-lg cursor-pointer"
                         >
-                          <Zap size={16} />
+                          <Zap size={16} className="shrink-0" />
                           <span>Run Role 4B Surgical Repair ({coderModel}) →</span>
                         </button>
                       </article>
@@ -1830,7 +1830,7 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-[#ff8a4c] animate-pulse" />
                 ⚡ DYNAMIC · LIVE WEBCRYPTO SHA-256 SEAL & KNOWLEDGE EXTRACTOR
               </div>
-              <article className="rounded-2xl border border-[#53d6ab]/50 bg-gradient-to-r from-[#53d6ab]/15 to-[#151c28] p-5 flex flex-wrap items-center justify-between gap-4">
+              <article className="rounded-2xl border-2 border-[#53d6ab]/60 bg-[#101926] p-5 flex flex-wrap items-center justify-between gap-4 shadow-xl">
                 <div>
                   <div className="font-mono text-xs font-bold tracking-widest text-[#53d6ab]">
                     CRYPTOGRAPHIC VERIFICATION SEAL ISSUED BY WORKER-S5 ({sealId})
@@ -1848,21 +1848,21 @@ export const LifecycleSimulator: React.FC<LifecycleSimulatorProps> = ({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
                   <button
                     type="button"
                     onClick={() => onOpenResultPreview?.(activeScenario.rawPrompt)}
-                    className="px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold text-xs flex items-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg"
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-[#ff8a4c] hover:bg-[#ffa06b] text-[#0c1018] font-extrabold text-xs flex items-center gap-2 transition-colors cursor-pointer shadow-lg leading-snug"
                   >
-                    <Eye size={15} />
+                    <Eye size={15} className="shrink-0" />
                     <span>Open Interactive Result Preview &amp; Download (HTML / ZIP) ➔</span>
                   </button>
                   <button
                     type="button"
                     onClick={onOpenKnowledgeTab}
-                    className="px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3bc497] text-[#0c1018] font-extrabold text-xs flex items-center gap-2 transition-colors cursor-pointer shrink-0"
+                    className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-[#53d6ab] hover:bg-[#3bc497] text-[#0c1018] font-extrabold text-xs flex items-center gap-2 transition-colors cursor-pointer leading-snug"
                   >
-                    <Sparkles size={15} />
+                    <Sparkles size={15} className="shrink-0" />
                     <span>Inspect Promoted Tier 3 Knowledge Unit →</span>
                   </button>
                 </div>

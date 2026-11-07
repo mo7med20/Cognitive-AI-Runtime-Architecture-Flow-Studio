@@ -897,62 +897,64 @@ export default function App() {
            =============================================================== */}
         <section
           aria-label="Parallel Local LLM Runtime Control Bar"
-          className="mb-4 rounded-xl border border-[#243247] bg-[#111826] px-4 py-3 space-y-2.5 shadow-md"
+          className="mb-4 rounded-xl border border-[#243247] bg-[#111826] px-4 py-2.5 space-y-2.5 shadow-md"
         >
-          {/* Row 1: Full-Width Prompt Input + Step-by-Step / Auto-Run Dispatch */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (customPromptInput.trim()) {
-                handleStartRuntimeWithPrompt(customPromptInput);
-              }
-            }}
-            className="flex flex-col md:flex-row items-stretch md:items-center gap-2 min-w-0"
-          >
-            <input
-              type="text"
-              data-testid="top-bar-prompt-input"
-              value={customPromptInput}
-              onChange={(e) => setCustomPromptInput(e.target.value)}
-              placeholder="Enter your software engineering prompt (e.g., i need landing-page for my site)..."
-              className="flex-1 min-w-0 rounded-lg border border-[#2b3c56] bg-[#0a0f18] px-3.5 py-2 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
-            />
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button
-                type="submit"
-                data-testid="top-start-step1-btn"
-                disabled={isStageExecuting || !customPromptInput.trim()}
-                className="px-3.5 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
-              >
-                <Play size={13} />
-                <span>Start Step 1 Intake Role (S0 → S1) →</span>
-              </button>
-              <button
-                type="button"
-                data-testid="top-autorun-btn"
-                disabled={isStageExecuting}
-                onClick={() =>
-                  handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+          {/* Row 1: Full-Width Prompt Input (Shown when runtime is active S1-S5 or on reference tabs; hidden on S0 Launchpad to avoid duplicate inputs and on Result Preview to keep deliverable above the fold) */}
+          {!(activeTab === 'flow_studio' && isRuntimeIdle) && activeTab !== 'result_preview' && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (customPromptInput.trim()) {
+                  handleStartRuntimeWithPrompt(customPromptInput);
                 }
-                className="px-3.5 py-2 rounded-lg bg-[#162234] hover:bg-[#1e2e46] border border-[#53d6ab]/45 text-[#53d6ab] disabled:opacity-50 font-mono text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
-              >
-                {isStageExecuting ? (
-                  <>
-                    <Loader2 size={13} className="animate-spin" />
-                    <span>Running Roles...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={13} />
-                    <span>Auto-Execute All 5 Stages (S1→S5)</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              }}
+              className="flex flex-col md:flex-row items-stretch md:items-center gap-2 min-w-0 pb-2 border-b border-[#1e293b]"
+            >
+              <input
+                type="text"
+                data-testid="top-bar-prompt-input"
+                value={customPromptInput}
+                onChange={(e) => setCustomPromptInput(e.target.value)}
+                placeholder="Enter any software engineering prompt to run a new 5-stage cycle..."
+                className="flex-1 min-w-0 rounded-lg border border-[#2b3c56] bg-[#0a0f18] px-3.5 py-2 text-xs text-white placeholder-[#7c8ca5] focus:border-[#ff8a4c] focus:outline-none font-mono"
+              />
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <button
+                  type="submit"
+                  data-testid="top-start-step1-btn"
+                  disabled={isStageExecuting || !customPromptInput.trim()}
+                  className="px-3.5 py-2 rounded-lg bg-[#ff8a4c] hover:bg-[#ffa06b] disabled:opacity-50 text-[#0c1018] font-mono text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Play size={13} />
+                  <span>Start Step 1 Intake Role (S0 → S1) →</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="top-autorun-btn"
+                  disabled={isStageExecuting}
+                  onClick={() =>
+                    handleAutoRunFullPipelineLive(customPromptInput.trim() || activeScenario.rawPrompt)
+                  }
+                  className="px-3.5 py-2 rounded-lg bg-[#162234] hover:bg-[#1e2e46] border border-[#53d6ab]/45 text-[#53d6ab] disabled:opacity-50 font-mono text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  {isStageExecuting ? (
+                    <>
+                      <Loader2 size={13} className="animate-spin" />
+                      <span>Running Roles...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play size={13} />
+                      <span>Auto-Execute All 5 Stages (S1→S5)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Row 2: Compact Worker Telemetry & Configuration Trigger */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#1e293b] text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#94a3b8]">
               <span
                 data-testid="global-runtime-status"

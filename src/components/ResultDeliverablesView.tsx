@@ -427,7 +427,7 @@ ${activeScenario.requirements.map((r) => `- **[PASS] ${r.id} (${r.category})**: 
                 title={`Live Deliverable Preview: ${activeScenario.title}`}
                 srcDoc={standaloneHtml}
                 className={`w-full border-0 bg-[#0b1018] ${
-                  isExpandedPreview ? 'h-[920px]' : 'h-[690px]'
+                  isExpandedPreview ? 'h-[1020px]' : 'h-[790px]'
                 }`}
                 sandbox="allow-scripts allow-forms allow-modals"
               />
